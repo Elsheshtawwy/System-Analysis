@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam for ch1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+        }
+        label {
+            margin-top: 3px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="homeContainer" class="home-container">
+            <h1>Chapter 1 Exam</h1>
+            <label class="slider-label">Select number of True/False questions:</label>
+            <input type="range" id="tfCount" min="1" max="0" value="5" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">1</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="1" max="0" value="5" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">1</span>
+            <br>
+            <button onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionsContainer"></div>
+        <button id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <footer>Developed by Badr El sheshtawy</footer>
+
+    <script>
+        const questions = [
+  { "type": "tf", "question": "AI is the study of how to make computers make things which at the moment people do better.", "answer": "True" },
+  { "type": "tf", "question": "Intelligence is defined as the capacity to learn and solve problems.", "answer": "True" },
+  { "type": "tf", "question": "The ability to act rationally is not considered a part of intelligence.", "answer": "False" },
+  { "type": "tf", "question": "According to Haugeland, AI is the exciting new effort to make computers think in the full and literal sense.", "answer": "True" },
+  { "type": "tf", "question": "Kurzweil defined AI as the art of creating machines that perform functions that require intelligence when performed by people.", "answer": "True" },
+  { "type": "tf", "question": "AI involves creating systems that act rationally.", "answer": "True" },
+  { "type": "tf", "question": "Interacting with the real world is not a requirement for an intelligent system.", "answer": "False" },
+  { "type": "tf", "question": "Image understanding is an example of AI interacting with the real world.", "answer": "True" },
+  { "type": "tf", "question": "Planning and making decisions is not a part of what intelligence involves.", "answer": "False" },
+  { "type": "tf", "question": "Learning and adaptation are continuous processes for intelligent systems.", "answer": "True" },
+  { "type": "tf", "question": "Alan Turing's 1950 article was titled 'Computing Machinery and Intelligence'.", "answer": "True" },
+  { "type": "tf", "question": "The Turing test does not involve natural language processing.", "answer": "False" },
+  { "type": "tf", "question": "Automated reasoning is necessary for a computer to pass the Turing test.", "answer": "True" },
+  { "type": "tf", "question": "Machine learning is not required for a computer to pass the Turing test.", "answer": "False" },
+  { "type": "tf", "question": "For the total Turing test, vision is required to recognize the examiner's actions.", "answer": "True" },
+  { "type": "tf", "question": "Motor control is not needed for the total Turing test.", "answer": "False" },
+  { "type": "tf", "question": "AI is the science and engineering of making intelligent machines that can perform tasks requiring intelligence when performed by humans.", "answer": "True" },
+  { "type": "tf", "question": "Logic and methods of reasoning are foundational aspects of AI.", "answer": "True" },
+  { "type": "tf", "question": "Mathematics does not play a role in AI development.", "answer": "False" },
+  { "type": "tf", "question": "Neuroscience and psychology are relevant academic disciplines for AI.", "answer": "True" },
+  { "type": "tf", "question": "AI research only involves theoretical work and not experimental work.", "answer": "False" },
+  { "type": "tf", "question": "Natural language processing is a branch of AI.", "answer": "True" },
+  { "type": "tf", "question": "Pattern recognition is not related to AI.", "answer": "False" },
+  { "type": "tf", "question": "Inference is the process of drawing new conclusions from known facts.", "answer": "True" },
+  { "type": "tf", "question": "Planning is not necessary for achieving goals in AI.", "answer": "False" },
+  { "type": "tf", "question": "Epistemology is the study of the kinds of knowledge required for solving problems in the world.", "answer": "True" },
+  { "type": "tf", "question": "Ontology in AI refers to the study of various kinds of objects and their properties.", "answer": "True" },
+  { "type": "tf", "question": "Deep Blue defeated the reigning world chess champion Garry Kasparov in 1997.", "answer": "True" },
+  { "type": "tf", "question": "AI programs have not yet solved any long-standing mathematical conjectures.", "answer": "False" },
+  { "type": "tf", "question": "During the 1991 Gulf War, US forces did not use any AI-based logistics planning programs.", "answer": "False" },
+  { "type": "tf", "question": "Face recognition software became available in consumer cameras in 2006.", "answer": "True" },
+  { "type": "tf", "question": "AI systems have not yet engaged in meaningful conversations.", "answer": "False" },
+  { "type": "tf", "question": "AI cannot observe and understand human emotions.", "answer": "False" },
+  { "type": "tf", "question": "AI has achieved world-class chess playing ability.", "answer": "True" },
+  { "type": "tf", "question": "AI systems cannot yet perform cross-country driving.", "answer": "False" },
+  { "type": "tf", "question": "AI can solve mathematical problems and discover new theories.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot translate languages accurately.", "answer": "False" },
+  { "type": "tf", "question": "AI technique involves exploiting knowledge represented in a useful way.", "answer": "True" },
+  { "type": "tf", "question": "AI systems are not used in everyday life, such as in post offices or banks.", "answer": "False" },
+  { "type": "tf", "question": "Automated fraud detection is an application of AI on the web.", "answer": "True" },
+  { "type": "tf", "question": "AI applications do not include machine translation.", "answer": "False" },
+  { "type": "tf", "question": "Recognizing continuous speech is an easy task for AI systems.", "answer": "False" },
+  { "type": "tf", "question": "AI systems can learn to categorize and recognize objects like a baby.", "answer": "True" },
+  { "type": "tf", "question": "The Turing test is an operational definition of intelligence.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot help in making decisions and plans for real-world problems.", "answer": "False" },
+  { "type": "tf", "question": "The study of mental faculties using computational models is one definition of AI.", "answer": "True" },
+  { "type": "tf", "question": "Recognizing single words from a small vocabulary is a classic problem in AI.", "answer": "True" },
+  { "type": "tf", "question": "AI systems cannot adapt to new circumstances.", "answer": "False" },
+  { "type": "tf", "question": "Automated reasoning does not use stored information to draw new conclusions.", "answer": "False" },
+  { "type": "tf", "question": "AI systems do not need to understand spoken language.", "answer": "False" },
+  { "type": "tf", "question": "AI has achieved the ability to play table tennis at a world-class level.", "answer": "False" },
+  { "type": "tf", "question": "In the Turing test, the system must always tell the truth.", "answer": "False" },
+  { "type": "tf", "question": "Computer-human conversation using speech recognition has been achieved by AI.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot solve problems or make decisions like humans.", "answer": "False" },
+  { "type": "tf", "question": "AI systems can engage in cross-country driving competitions.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot express human-like emotions.", "answer": "False" },
+  { "type": "tf", "question": "Knowledge representation in AI involves storing and retrieving information.", "answer": "True" },
+  { "type": "tf", "question": "The Turing test requires a computer to recognize the examiner’s actions for the total test.", "answer": "True" },
+  { "type": "tf", "question": "AI research is only focused on applied aspects and not on theoretical aspects.", "answer": "False" },
+  { "type": "tf", "question": "AI systems can control robot actions.", "answer": "True" },
+  { "type": "tf", "question": "AI systems are used in customer service for automatic voice recognition.", "answer": "True" },
+  { "type": "tf", "question": "AI has not been used in any successful real-world applications.", "answer": "False" },
+  { "type": "tf", "question": "AI systems cannot learn new skills or adapt over time.", "answer": "False" },
+  { "type": "tf", "question": "The Turing test measures a machine's ability to exhibit intelligent behavior.", "answer": "True" },
+  { "type": "tf", "question": "AI is limited to digital computers and cannot be applied to other devices.", "answer": "False" },
+  { "type": "tf", "question": "AI techniques have been used in improving web search engines.", "answer": "True" },
+  { "type": "tf", "question": "AI has not yet surpassed human experts in any specialized domain.", "answer": "False" },
+  { "type": "tf", "question": "Automated theorem proving is an example of an AI application.", "answer": "True" },
+  { "type": "tf", "question": "AI systems have not yet been used for medical diagnostics.", "answer": "False" },
+  { "type": "tf", "question": "AI can be used for speech synthesis and recognition.", "answer": "True" },
+  { "type": "tf", "question": "AI systems are not used for robotic control in manufacturing.", "answer": "False" },
+  { "type": "tf", "question": "Natural language processing helps AI systems understand and generate human language.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot perform tasks that involve visual perception.", "answer": "False" },
+  { "type": "tf", "question": "AI systems can simulate human reasoning.", "answer": "True" },
+  { "type": "tf", "question": "Machine learning is not a component of AI.", "answer": "False" },
+  { "type": "tf", "question": "AI research includes studying how to make decisions and plan actions.", "answer": "True" },
+  { "type": "tf", "question": "AI systems cannot engage in interactive dialogue.", "answer": "False" },
+  { "type": "tf", "question": "AI techniques have no impact on financial trading systems.", "answer": "False" },
+  { "type": "tf", "question": "AI can help in data analysis and pattern recognition.", "answer": "True" },
+  { "type": "tf", "question": "AI is limited to solving only mathematical problems.", "answer": "False" },
+  { "type": "tf", "question": "AI systems can generate creative content like music and art.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot be used for personalized recommendations.", "answer": "False" },
+  { "type": "tf", "question": "AI techniques are used in autonomous vehicles.", "answer": "True" },
+  { "type": "tf", "question": "AI research does not include studying human brain functions.", "answer": "False" },
+  { "type": "tf", "question": "AI systems can help in optimizing logistics and supply chains.", "answer": "True" },
+  { "type": "tf", "question": "AI does not involve studying computational models of mental faculties.", "answer": "False" },
+  { "type": "tf", "question": "AI applications include fraud detection and prevention.", "answer": "True" },
+  { "type": "tf", "question": "AI systems cannot be used for predictive analytics.", "answer": "False" },
+  { "type": "tf", "question": "AI can help in automating customer support services.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot assist in healthcare for diagnostics and treatment recommendations.", "answer": "False" },
+  { "type": "tf", "question": "AI systems are used in gaming for creating intelligent opponents.", "answer": "True" },
+  { "type": "tf", "question": "AI has no role in enhancing user experiences on social media platforms.", "answer": "False" },
+  { "type": "tf", "question": "AI can be used for language translation and interpretation.", "answer": "True" },
+  { "type": "tf", "question": "AI systems cannot adapt to user behavior and preferences.", "answer": "False" },
+  { "type": "tf", "question": "AI cannot help in improving cybersecurity measures.", "answer": "False" },
+  { "type": "tf", "question": "AI is used in the development of smart home devices.", "answer": "True" },
+  { "type": "tf", "question": "AI cannot process and analyze large datasets.", "answer": "False" },
+  { "type": "tf", "question": "AI research includes studying how to simulate human emotions.", "answer": "True" },
+  {
+    "type": "mc",
+    "question": "Which of the following is considered a major breakthrough in AI for game playing?",
+    "options": [
+      "A) IBM Watson",
+      "B) Deep Blue",
+      "C) AlphaGo",
+      "D) Siri"
+    ],
+    "answer": "C) AlphaGo"
+  },
+  {
+    "type": "mc",
+    "question": "Which programming language is most commonly associated with AI research?",
+    "options": [
+      "A) Java",
+      "B) Python",
+      "C) C++",
+      "D) Ruby"
+    ],
+    "answer": "B) Python"
+  },
+  {
+    "type": "mc",
+    "question": "In the context of AI, what does NLP stand for?",
+    "options": [
+      "A) Neural Language Processing",
+      "B) Natural Learning Processing",
+      "C) Natural Language Processing",
+      "D) Neural Learning Processing"
+    ],
+    "answer": "C) Natural Language Processing"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI concept involves systems that learn from data to improve their performance?",
+    "options": [
+      "A) Expert Systems",
+      "B) Machine Learning",
+      "C) Robotics",
+      "D) Neural Networks"
+    ],
+    "answer": "B) Machine Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which term describes the ability of an AI system to understand and generate human language?",
+    "options": [
+      "A) Computer Vision",
+      "B) Neural Networks",
+      "C) Natural Language Processing",
+      "D) Robotics"
+    ],
+    "answer": "C) Natural Language Processing"
+  },
+  {
+    "type": "mc",
+    "question": "What is the main goal of AI research?",
+    "options": [
+      "A) To create systems that act intelligently",
+      "B) To replace human intelligence",
+      "C) To understand the human brain",
+      "D) To solve all mathematical problems"
+    ],
+    "answer": "A) To create systems that act intelligently"
+  },
+  {
+    "type": "mc",
+    "question": "Which of the following is an application of AI in healthcare?",
+    "options": [
+      "A) Automated trading",
+      "B) Image recognition",
+      "C) Fraud detection",
+      "D) Medical diagnostics"
+    ],
+    "answer": "D) Medical diagnostics"
+  },
+  {
+    "type": "mc",
+    "question": "What is the name of the AI technique that involves networks of interconnected processing elements?",
+    "options": [
+      "A) Decision Trees",
+      "B) Genetic Algorithms",
+      "C) Neural Networks",
+      "D) Support Vector Machines"
+    ],
+    "answer": "C) Neural Networks"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI technique is used to find the best solution from a set of possible solutions?",
+    "options": [
+      "A) Reinforcement Learning",
+      "B) Evolutionary Algorithms",
+      "C) Clustering",
+      "D) Regression"
+    ],
+    "answer": "B) Evolutionary Algorithms"
+  },
+  {
+    "type": "mc",
+    "question": "Which of the following AI applications involves converting spoken language into text?",
+    "options": [
+      "A) Speech Synthesis",
+      "B) Speech Recognition",
+      "C) Image Recognition",
+      "D) Natural Language Generation"
+    ],
+    "answer": "B) Speech Recognition"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI term describes a system that can reason about knowledge?",
+    "options": [
+      "A) Knowledge Representation",
+      "B) Machine Learning",
+      "C) Planning",
+      "D) Inference"
+    ],
+    "answer": "D) Inference"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI approach involves using data to create models that can make predictions?",
+    "options": [
+      "A) Heuristic Search",
+      "B) Expert Systems",
+      "C) Machine Learning",
+      "D) Planning"
+    ],
+    "answer": "C) Machine Learning"
+  },
+  {
+    "type": "mc",
+    "question": "In which field of AI would you study algorithms that learn from data?",
+    "options": [
+      "A) Natural Language Processing",
+      "B) Machine Learning",
+      "C) Robotics",
+      "D) Computer Vision"
+    ],
+    "answer": "B) Machine Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI technique uses probability and statistics to represent and reason about uncertainty?",
+    "options": [
+      "A) Neural Networks",
+      "B) Bayesian Networks",
+      "C) Genetic Algorithms",
+      "D) Decision Trees"
+    ],
+    "answer": "B) Bayesian Networks"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method is used to find patterns in large datasets?",
+    "options": [
+      "A) Regression",
+      "B) Clustering",
+      "C) Planning",
+      "D) Natural Language Processing"
+    ],
+    "answer": "B) Clustering"
+  },
+  {
+    "type": "mc",
+    "question": "Which concept involves AI systems learning from their own experiences?",
+    "options": [
+      "A) Supervised Learning",
+      "B) Unsupervised Learning",
+      "C) Reinforcement Learning",
+      "D) Semi-Supervised Learning"
+    ],
+    "answer": "C) Reinforcement Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI field focuses on the design and construction of robots?",
+    "options": [
+      "A) Machine Learning",
+      "B) Robotics",
+      "C) Natural Language Processing",
+      "D) Computer Vision"
+    ],
+    "answer": "B) Robotics"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI concept involves generating explanations from data?",
+    "options": [
+      "A) Decision Trees",
+      "B) Clustering",
+      "C) Regression",
+      "D) Natural Language Processing"
+    ],
+    "answer": "A) Decision Trees"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI technique is often used for image recognition tasks?",
+    "options": [
+      "A) Decision Trees",
+      "B) Neural Networks",
+      "C) Genetic Algorithms",
+      "D) Expert Systems"
+    ],
+    "answer": "B) Neural Networks"
+  },
+  {
+    "type": "mc",
+    "question": "Which of the following is a type of unsupervised learning?",
+    "options": [
+      "A) Clustering",
+      "B) Regression",
+      "C) Classification",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "A) Clustering"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI approach involves searching through a space of possible solutions?",
+    "options": [
+      "A) Expert Systems",
+      "B) Heuristic Search",
+      "C) Machine Learning",
+      "D) Natural Language Processing"
+    ],
+    "answer": "B) Heuristic Search"
+  },
+  {
+    "type": "mc",
+    "question": "Which type of learning involves training an AI model with labeled data?",
+    "options": [
+      "A) Supervised Learning",
+      "B) Unsupervised Learning",
+      "C) Reinforcement Learning",
+      "D) Transfer Learning"
+    ],
+    "answer": "A) Supervised Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method involves optimizing solutions based on a fitness function?",
+    "options": [
+      "A) Neural Networks",
+      "B) Genetic Algorithms",
+      "C) Bayesian Networks",
+      "D) Decision Trees"
+    ],
+    "answer": "B) Genetic Algorithms"
+  },
+  {
+    "type": "mc",
+    "question": "Which term refers to the ability of AI to make decisions based on logic and rules?",
+    "options": [
+      "A) Knowledge Representation",
+      "B) Inference",
+      "C) Planning",
+      "D) Reasoning"
+    ],
+    "answer": "D) Reasoning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI concept involves dividing data into training and testing sets?",
+    "options": [
+      "A) Cross-Validation",
+      "B) Clustering",
+      "C) Regression",
+      "D) Natural Language Processing"
+    ],
+    "answer": "A) Cross-Validation"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI term describes systems that simulate human conversations?",
+    "options": [
+      "A) Expert Systems",
+      "B) Chatbots",
+      "C) Machine Learning",
+      "D) Robotics"
+    ],
+    "answer": "B) Chatbots"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI field involves teaching machines to interpret visual data?",
+    "options": [
+      "A) Natural Language Processing",
+      "B) Computer Vision",
+      "C) Machine Learning",
+      "D) Robotics"
+    ],
+    "answer": "B) Computer Vision"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method is used to predict numerical values from data?",
+    "options": [
+      "A) Clustering",
+      "B) Classification",
+      "C) Regression",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "C) Regression"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI term refers to the process of selecting the best action from a set of alternatives?",
+    "options": [
+      "A) Inference",
+      "B) Reasoning",
+      "C) Planning",
+      "D) Decision Making"
+    ],
+    "answer": "D) Decision Making"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI technique is used to optimize the performance of a model?",
+    "options": [
+      "A) Cross-Validation",
+      "B) Clustering",
+      "C) Regression",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "A) Cross-Validation"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method involves exploring multiple potential solutions simultaneously?",
+    "options": [
+      "A) Neural Networks",
+      "B) Genetic Algorithms",
+      "C) Bayesian Networks",
+      "D) Decision Trees"
+    ],
+    "answer": "B) Genetic Algorithms"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI field focuses on creating systems that can perceive and respond to the environment?",
+    "options": [
+      "A) Machine Learning",
+      "B) Robotics",
+      "C) Natural Language Processing",
+      "D) Computer Vision"
+    ],
+    "answer": "B) Robotics"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI approach involves learning from data without explicit programming?",
+    "options": [
+      "A) Supervised Learning",
+      "B) Unsupervised Learning",
+      "C) Machine Learning",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "C) Machine Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI technique involves learning from positive and negative feedback?",
+    "options": [
+      "A) Supervised Learning",
+      "B) Unsupervised Learning",
+      "C) Reinforcement Learning",
+      "D) Transfer Learning"
+    ],
+    "answer": "C) Reinforcement Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method is used to identify patterns in text data?",
+    "options": [
+      "A) Clustering",
+      "B) Natural Language Processing",
+      "C) Regression",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "B) Natural Language Processing"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI field involves teaching machines to recognize objects in images?",
+    "options": [
+      "A) Natural Language Processing",
+      "B) Computer Vision",
+      "C) Machine Learning",
+      "D) Robotics"
+    ],
+    "answer": "B) Computer Vision"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI term describes the ability to improve performance with more data?",
+    "options": [
+      "A) Clustering",
+      "B) Reinforcement Learning",
+      "C) Machine Learning",
+      "D) Supervised Learning"
+    ],
+    "answer": "C) Machine Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method is used for finding the structure in unlabeled data?",
+    "options": [
+      "A) Supervised Learning",
+      "B) Unsupervised Learning",
+      "C) Reinforcement Learning",
+      "D) Transfer Learning"
+    ],
+    "answer": "B) Unsupervised Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI concept involves predicting future events based on historical data?",
+    "options": [
+      "A) Clustering",
+      "B) Regression",
+      "C) Reinforcement Learning",
+      "D) Decision Trees"
+    ],
+    "answer": "B) Regression"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI technique is used to enhance the performance of an existing model?",
+    "options": [
+      "A) Transfer Learning",
+      "B) Clustering",
+      "C) Regression",
+      "D) Natural Language Processing"
+    ],
+    "answer": "A) Transfer Learning"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI field involves creating systems that can understand human speech?",
+    "options": [
+      "A) Natural Language Processing",
+      "B) Computer Vision",
+      "C) Machine Learning",
+      "D) Robotics"
+    ],
+    "answer": "A) Natural Language Processing"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI method involves using algorithms to parse and understand text?",
+    "options": [
+      "A) Clustering",
+      "B) Natural Language Processing",
+      "C) Regression",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "B) Natural Language Processing"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI concept involves grouping similar items together?",
+    "options": [
+      "A) Regression",
+      "B) Classification",
+      "C) Clustering",
+      "D) Reinforcement Learning"
+    ],
+    "answer": "C) Clustering"
+  },
+  {
+    "type": "mc",
+    "question": "Which AI term describes the process of making decisions based on data?",
+    "options": [
+      "A) Inference",
+      "B) Reasoning",
+      "C) Planning",
+      "D) Data Mining"
+    ],
+    "answer": "D) Data Mining"
+  },
+];
+
+
+
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let selectedTFCount = 0;
+        let selectedMCCount = 0;
+        let selectedQuestions = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRangeValues();
+            shuffleQuestions();
+        });
+
+        function updateRangeValues() {
+            const tfRange = document.getElementById('tfCount');
+            const mcRange = document.getElementById('mcCount');
+            tfRange.max = questions.filter(q => q.type === 'tf').length;
+            mcRange.max = questions.filter(q => q.type === 'mc').length;
+        }
+
+        function updateValue(id, value) {
+            document.getElementById(id).innerText = value;
+        }
+
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+        }
+
+        function startExam() {
+            selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            selectedMCCount = parseInt(document.getElementById('mcCount').value);
+            selectedQuestions = getSelectedQuestions();
+            userAnswers = new Array(selectedQuestions.length).fill(null);
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            displayQuestion();
+        }
+
+        function getSelectedQuestions() {
+            const tfQuestions = questions.filter(q => q.type === 'tf').slice(0, selectedTFCount);
+            const mcQuestions = questions.filter(q => q.type === 'mc').slice(0, selectedMCCount);
+            return [...tfQuestions, ...mcQuestions];
+        }
+
+        function displayQuestion() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            const questionObj = selectedQuestions[currentQuestionIndex];
+            const questionElement = document.createElement('div');
+            questionElement.classList.add('question', 'active');
+            questionElement.innerHTML = `<p>Question ${currentQuestionIndex + 1}: ${questionObj.question}</p>`;
+
+            if (questionObj.type === 'tf') {
+                questionElement.innerHTML += `
+                    <label style="display:block;"><input type="radio" name="answer" value="T"> True</label>
+                    <label style="display:block;"><input type="radio" name="answer" value="F"> False</label>
+                `;
+            } else if (questionObj.type === 'mc') {
+                questionObj.options.forEach(option => {
+                    questionElement.innerHTML += `
+                        <label style="display:block;"><input type="radio" name="answer" value="${option}"> ${option}</label>
+                    `;
+                });
+            }
+            container.appendChild(questionElement);
+
+            if (userAnswers[currentQuestionIndex] !== null) {
+                const selectedOption = document.querySelector(`input[name="answer"][value="${userAnswers[currentQuestionIndex]}"]`);
+                if (selectedOption) selectedOption.checked = true;
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                saveAnswer();
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < selectedQuestions.length - 1) {
+                saveAnswer();
+                currentQuestionIndex++;
+                displayQuestion();
+            }
+        }
+
+        function saveAnswer() {
+            const selectedOption = document.querySelector('input[name="answer"]:checked');
+            if (selectedOption) {
+                userAnswers[currentQuestionIndex] = selectedOption.value;
+            }
+        }
+
+        function submitExam() {
+            saveAnswer();
+            let score = 0;
+            let correctAnswers = [];
+            selectedQuestions.forEach((question, index) => {
+                if (userAnswers[index] === question.answer) {
+                    score++;
+                } else {
+                    correctAnswers.push({ question: question.question, correctAnswer: question.answer, userAnswer: userAnswers[index] });
+                }
+            });
+
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = `<div class="result">You scored ${score} out of ${selectedQuestions.length}</div>`;
+
+            if (score === selectedQuestions.length) {
+                resultContainer.innerHTML += '<div class="result">Congratulations! You got a perfect score!</div>';
+            } else {
+                correctAnswers.forEach(({ question, correctAnswer, userAnswer }) => {
+                    resultContainer.innerHTML += `
+                        <div class="result">
+                            <p>Question: ${question}</p>
+                            <p>Correct Answer: ${correctAnswer}</p>
+                            <p>Your Answer: ${userAnswer}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('homeContainer').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
+

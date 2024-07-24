@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam for ch3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+        }
+        label {
+            margin-top: 3px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="homeContainer" class="home-container">
+            <h1>ِChapter4 Exam</h1>
+            <label class="slider-label">Select number of T/F questions:</label>
+            <input type="range" id="tfCount" min="1" max="0" value="5" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">1</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="1" max="0" value="5" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">1</span>
+            <br>
+            <button onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionsContainer"></div>
+        <button id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <footer>Developed by Badr El sheshtawy</footer>
+
+    <script>
+      const questions =[
+  { "type": "tf", "question": "A questionnaire is a set of written questions for obtaining information from individuals.", "answer": "F" },
+  { "type": "tf", "question": "The real or informal system is always the same as the formal one described by documents.", "answer": "F" },
+  { "type": "tf", "question": "Observation is a tool to check the validity of information gathered from other sources.", "answer": "F" },
+  { "type": "tf", "question": "People tend to behave naturally when they are being observed.", "answer": "F" },
+  { "type": "tf", "question": "The process of requirements analysis bridges the gap between system level requirements engineering and software design.", "answer": "F" },
+  { "type": "tf", "question": "Functional requirements describe 'how' a system is to be built.", "answer": "F" },
+  { "type": "tf", "question": "A use case describes a sequence of interactions between a system and an external actor.", "answer": "F" },
+  { "type": "tf", "question": "Non-functional requirements are concerned with 'what' is to be built.", "answer": "F" },
+  { "type": "tf", "question": "Requirements specification is the basis for all subsequent project planning, design, and coding.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should describe design, construction, testing, and project management details.", "answer": "F" },
+  { "type": "tf", "question": "Customers use the SRS to know what product they can expect to be delivered.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is not used by the testing group to develop test plans, cases, and procedures.", "answer": "F" },
+  { "type": "tf", "question": "Legal staff use the SRS to ensure requirements comply with applicable laws and regulations.", "answer": "F" },
+  { "type": "tf", "question": "Document analysis is used to understand the as-is system.", "answer": "F" },
+  { "type": "tf", "question": "Forms and reports describe the informal system used by an organization.", "answer": "F" },
+  { "type": "tf", "question": "A well-designed questionnaire should avoid leading questions.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis involves categorizing and organizing requirements into subsets.", "answer": "F" },
+  { "type": "tf", "question": "Requirements validation is not part of requirements engineering.", "answer": "F" },
+  { "type": "tf", "question": "Each requirement should be bounded and unambiguous.", "answer": "F" },
+  { "type": "tf", "question": "The SRS does not need to describe the system's behaviors under various conditions.", "answer": "F" },
+  { "type": "tf", "question": "The primary purpose of a use case diagram is to provide a low-level visual representation of the user requirements.", "answer": "F" },
+  { "type": "tf", "question": "A functional specification is sometimes called a software requirements specification (SRS).", "answer": "F" },
+  { "type": "tf", "question": "Project managers do not base their estimates on the product description in the SRS.", "answer": "F" },
+  { "type": "tf", "question": "Observation is used to gather data on processes being performed in their natural setting.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis and negotiation occur before requirements are gathered.", "answer": "F" },
+  { "type": "tf", "question": "A well-designed questionnaire should have unambiguous and specific questions.", "answer": "F" },
+  { "type": "tf", "question": "Combining different techniques is not recommended for gathering requirements.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is used by documentation writers to base user manuals and help screens.", "answer": "F" },
+  { "type": "tf", "question": "In a use case, an actor is always a person.", "answer": "F" },
+  { "type": "tf", "question": "Training personnel do not use the SRS to develop educational materials.", "answer": "F" },
+  { "type": "tf", "question": "A specification can include a formal mathematical model.", "answer": "F" },
+  { "type": "tf", "question": "Observation can reveal discrepancies between the formal and informal system.", "answer": "F" },
+  { "type": "tf", "question": "An actor in a use case can be another software system.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is the foundation for system testing and user documentation.", "answer": "F" },
+  { "type": "tf", "question": "The real system always matches the formal system described in documents.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis checks for consistency, omissions, and ambiguity in requirements.", "answer": "F" },
+  { "type": "tf", "question": "User involvement is not important in selecting the appropriate techniques for requirements elicitation.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should contain design, construction, testing, and project management details.", "answer": "F" },
+  { "type": "tf", "question": "A questionnaire follow-up is used to develop a report.", "answer": "F" },
+  { "type": "tf", "question": "The SRS tells the software development team what to build.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis does not involve exploring each requirement's relationship to others.", "answer": "F" },
+  { "type": "tf", "question": "Observation is not a tool to gain insight into the as-is system.", "answer": "F" },
+  { "type": "tf", "question": "A use case diagram provides a high-level visual representation of the user requirements.", "answer": "F" },
+  { "type": "tf", "question": "A well-designed questionnaire should include ambiguous questions to test respondents.", "answer": "F" },
+  { "type": "tf", "question": "Combining techniques can improve the depth and breadth of information gathered.", "answer": "F" },
+  { "type": "tf", "question": "Document analysis does not involve understanding the formal system described by an organization.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should describe the system's behaviors under various conditions.", "answer": "F" },
+  { "type": "tf", "question": "Observation can be used to validate information gathered from other sources.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is not used by legal staff to ensure compliance with laws and regulations.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis involves only gathering requirements, not organizing them.", "answer": "F" },
+  { "type": "tf", "question": "A good questionnaire should follow practice guidelines for designing questions.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should not contain any known design and implementation constraints.", "answer": "F" },
+  { "type": "tf", "question": "Combining techniques for requirements elicitation can reduce the cost of gathering information.", "answer": "F" },
+  { "type": "tf", "question": "Functional requirements express 'how' a system is to be built.", "answer": "F" },
+  { "type": "tf", "question": "A use case diagram can include actors who interact with the system.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is not a basis for subsequent project planning and design.", "answer": "F" },
+  { "type": "tf", "question": "Observation is used to understand the as-is system.", "answer": "F" },
+  { "type": "tf", "question": "Project managers do not use the SRS to base their estimates of schedule and resources.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis does not include ranking requirements based on customer needs.", "answer": "F" },
+  { "type": "tf", "question": "Observation can check the validity of information from other sources.", "answer": "F" },
+  { "type": "tf", "question": "A specification can be a set of graphical models.", "answer": "F" },
+  { "type": "tf", "question": "Users of a requirements document do not include training personnel.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis involves examining requirements for omissions.", "answer": "F" },
+  { "type": "tf", "question": "Legal staff use the SRS to ensure compliance with laws.", "answer": "F" },
+  { "type": "tf", "question": "A well-designed questionnaire should avoid biased questions.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should be used as the basis for system testing.", "answer": "F" },
+  { "type": "tf", "question": "Observation is not a powerful tool to gain insight into the as-is system.", "answer": "F" },
+  { "type": "tf", "question": "The SRS tells the software development team what not to build.", "answer": "F" },
+  { "type": "tf", "question": "A use case diagram is used to provide a high-level representation of user requirements.", "answer": "F" },
+  { "type": "tf", "question": "A functional specification is never called a software requirements specification.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should describe the system's behavior under various conditions.", "answer": "F" },
+  { "type": "tf", "question": "Combining techniques for requirements elicitation can improve the response rates.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis does not involve checking requirements for consistency.", "answer": "F" },
+  { "type": "tf", "question": "A questionnaire is designed to gather information from individuals.", "answer": "F" },
+  { "type": "tf", "question": "Observation can reveal what needs to be changed in a system.", "answer": "F" },
+  { "type": "tf", "question": "Functional requirements describe what a system is to do.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis does not categorize and organize requirements.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is used by project managers to base their estimates of effort.", "answer": "F" },
+  { "type": "tf", "question": "Observation is not used to understand the as-is system.", "answer": "F" },
+  { "type": "tf", "question": "The SRS is not used by the testing group to develop test plans.", "answer": "F" },
+  { "type": "tf", "question": "Observation is used to gain insight into the as-is system.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis involves checking for omissions in requirements.", "answer": "F" },
+  { "type": "tf", "question": "A well-designed questionnaire should include leading questions.", "answer": "F" },
+  { "type": "tf", "question": "Combining techniques for requirements elicitation can enhance the depth of information gathered.", "answer": "F" },
+  { "type": "tf", "question": "The SRS should describe design and construction details.", "answer": "F" },
+  { "type": "tf", "question": "Legal staff ensure that the requirements comply with applicable laws.", "answer": "F" },
+  { "type": "tf", "question": "A use case describes interactions between a system and an external actor.", "answer": "F" },
+  { "type": "tf", "question": "Requirements analysis does not involve ranking requirements based on customer needs.", "answer": "F" },
+  { "type": "tf", "question": "Observation can validate information from other sources.", "answer": "F" },
+  { "type": "tf", "question": "A specification can be a written document or a set of graphical models.", "answer": "F" },
+  { "type": "tf", "question": "A well-designed questionnaire should follow good practice guidelines.", "answer": "F" },
+  { "type": "mc", "question": "What is the primary goal of a questionnaire in requirements gathering?", "options": ["A) To design system prototypes", "B) To obtain information from individuals", "C) To implement system design", "D) To generate new requirements"], "answer": "B) To obtain information from individuals" },
+  { "type": "mc", "question": "Which document describes the formal system used by an organization?", "options": ["A) System Design Document", "B) Policy Manual", "C) User Manual", "D) Project Plan"], "answer": "B) Policy Manual" },
+  { "type": "mc", "question": "What is the purpose of document analysis in requirements engineering?", "options": ["A) To observe processes", "B) To understand the as-is system", "C) To gather user requirements", "D) To design new forms"], "answer": "B) To understand the as-is system" },
+  { "type": "mc", "question": "Which of the following is a drawback of observation as a data collection method?", "options": ["A) It provides detailed insights into processes", "B) It can reveal discrepancies between formal and informal systems", "C) People tend to change their behavior when being observed", "D) It helps in understanding user needs"], "answer": "C) People tend to change their behavior when being observed" },
+  { "type": "mc", "question": "In requirements analysis, what does categorizing and organizing requirements involve?", "options": ["A) Ranking requirements based on customer needs", "B) Implementing the system design", "C) Developing system prototypes", "D) Conducting surveys"], "answer": "A) Ranking requirements based on customer needs" },
+  { "type": "mc", "question": "What is the main focus of a use case?", "options": ["A) Describing system functionality", "B) Illustrating system architecture", "C) Documenting system requirements", "D) Describing a sequence of interactions between a system and an external actor"], "answer": "D) Describing a sequence of interactions between a system and an external actor" },
+  { "type": "mc", "question": "What should the SRS not contain?", "options": ["A) System's behaviors under various conditions", "B) Design, construction, testing, or project management details", "C) Constraints of the system", "D) Functional and non-functional requirements"], "answer": "B) Design, construction, testing, or project management details" },
+  { "type": "mc", "question": "Which of the following is a non-functional requirement?", "options": ["A) The system shall allow users to withdraw cash", "B) The system shall generate a list of patients for each clinic", "C) Time needed to open the page for edit slide functionality should be less", "D) A user shall be able to search appointments"], "answer": "C) Time needed to open the page for edit slide functionality should be less" },
+  { "type": "mc", "question": "What is the purpose of using questionnaires in requirements gathering?", "options": ["A) To improve response rates", "B) To administer the system design", "C) To document system architecture", "D) To explore and expand on a topic during an interview"], "answer": "A) To improve response rates" },
+  { "type": "mc", "question": "Which of the following is not a user of a requirements document?", "options": ["A) Customers", "B) Project Managers", "C) Marketing Department", "D) System Designers"], "answer": "D) System Designers" },
+  { "type": "mc", "question": "Which technique is used to validate the correctness and feasibility of requirements?", "options": ["A) Document Analysis", "B) Observation", "C) Requirements Validation", "D) Use-Case Approach"], "answer": "C) Requirements Validation" },
+  { "type": "mc", "question": "Which of the following best describes a functional requirement?", "options": ["A) Describes 'what' the system should do", "B) Describes 'how' the system should be built", "C) Focuses on system performance", "D) Relates to user interface design"], "answer": "A) Describes 'what' the system should do" },
+  { "type": "mc", "question": "What is the role of an actor in a use case?", "options": ["A) To describe the system's behavior", "B) To provide a visual representation of requirements", "C) To interact with the system to achieve a goal", "D) To document the system requirements"], "answer": "C) To interact with the system to achieve a goal" },
+  { "type": "mc", "question": "Which document serves as the basis for system testing and user documentation?", "options": ["A) System Design Document", "B) Project Plan", "C) Software Requirements Specification (SRS)", "D) Policy Manual"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "Which of the following is not a method for collecting requirements?", "options": ["A) Observation", "B) Document Analysis", "C) System Design", "D) Questionnaire"], "answer": "C) System Design" },
+  { "type": "mc", "question": "Which technique is used to understand the as-is system and identify areas for improvement?", "options": ["A) Document Analysis", "B) Use-Case Approach", "C) Observation", "D) Requirements Validation"], "answer": "C) Observation" },
+  { "type": "mc", "question": "What should the SRS describe in detail?", "options": ["A) System design and construction", "B) User interface design and layout", "C) System's behaviors under various conditions", "D) Project management and scheduling"], "answer": "C) System's behaviors under various conditions" },
+  { "type": "mc", "question": "Which of the following is a characteristic of a well-designed questionnaire?", "options": ["A) It includes leading questions", "B) It follows good practice guidelines", "C) It avoids clear and specific questions", "D) It is administered without follow-up"], "answer": "B) It follows good practice guidelines" },
+  { "type": "mc", "question": "Which type of requirement describes 'how' a system should be built?", "options": ["A) Functional Requirement", "B) Non-Functional Requirement", "C) Design Constraint", "D) Performance Requirement"], "answer": "C) Design Constraint" },
+  { "type": "mc", "question": "What is the purpose of categorizing requirements in requirements analysis?", "options": ["A) To develop system prototypes", "B) To organize requirements into related subsets", "C) To implement the system design", "D) To gather user feedback"], "answer": "B) To organize requirements into related subsets" },
+  { "type": "mc", "question": "What does the term 'non-functional requirement' refer to?", "options": ["A) What the system should do", "B) How the system should perform", "C) System behavior under various conditions", "D) User interface design"], "answer": "B) How the system should perform" },
+  { "type": "mc", "question": "Which of the following techniques is used to gain insight into the as-is system?", "options": ["A) Requirements Analysis", "B) Use-Case Approach", "C) Observation", "D) Document Analysis"], "answer": "C) Observation" },
+  { "type": "mc", "question": "Which audience relies on the SRS for developing educational materials?", "options": ["A) Marketing Department", "B) Customers", "C) Training Personnel", "D) Legal Staff"], "answer": "C) Training Personnel" },
+  { "type": "mc", "question": "What should a specification include according to the SRS guidelines?", "options": ["A) Design details", "B) System's capabilities and constraints", "C) Construction and testing methods", "D) Project management plans"], "answer": "B) System's capabilities and constraints" },
+  { "type": "mc", "question": "What is a primary purpose of the use-case approach?", "options": ["A) To describe system design", "B) To illustrate system functionality", "C) To document requirements in detail", "D) To represent user requirements visually"], "answer": "D) To represent user requirements visually" },
+  { "type": "mc", "question": "Which of the following best describes a requirement that is 'bounded and unambiguous'?", "options": ["A) It is well-defined and clear", "B) It includes all possible scenarios", "C) It is subject to frequent changes", "D) It focuses on system performance"], "answer": "A) It is well-defined and clear" },
+  { "type": "mc", "question": "What role does the SRS play in the software development lifecycle?", "options": ["A) It defines the system's design and construction", "B) It provides a foundation for system testing and user documentation", "C) It outlines project management strategies", "D) It describes the implementation details"], "answer": "B) It provides a foundation for system testing and user documentation" },
+  { "type": "mc", "question": "Which of the following is a primary use of requirements validation?", "options": ["A) To ensure requirements are aligned with stakeholders' needs", "B) To develop system prototypes", "C) To implement system design", "D) To document system architecture"], "answer": "A) To ensure requirements are aligned with stakeholders' needs" },
+  { "type": "mc", "question": "What does the term 'functional requirements' refer to?", "options": ["A) System constraints and performance", "B) System's expected behaviors and actions", "C) User interface and design details", "D) Technical specifications"], "answer": "B) System's expected behaviors and actions" },
+  { "type": "mc", "question": "Which document provides a high-level visual representation of user requirements?", "options": ["A) System Design Document", "B) Software Requirements Specification", "C) Use-Case Diagram", "D) Project Plan"], "answer": "C) Use-Case Diagram" },
+  { "type": "mc", "question": "In which scenario is document analysis most useful?", "options": ["A) When designing new forms", "B) When understanding the as-is system", "C) When observing user behavior", "D) When gathering feedback from questionnaires"], "answer": "B) When understanding the as-is system" },
+  { "type": "mc", "question": "Which technique is used to verify that requirements meet stakeholder needs?", "options": ["A) Observation", "B) Requirements Validation", "C) Document Analysis", "D) Use-Case Approach"], "answer": "B) Requirements Validation" },
+  { "type": "mc", "question": "What does the SRS describe in terms of the system’s behavior?", "options": ["A) How to design the system", "B) How the system should be built", "C) Expected behaviors under various conditions", "D) Project scheduling and management"], "answer": "C) Expected behaviors under various conditions" },
+  { "type": "mc", "question": "Which audience uses the SRS to base their estimates of effort, schedule, and resources?", "options": ["A) Marketing Department", "B) Project Managers", "C) Testing Group", "D) Maintenance and Support Staff"], "answer": "B) Project Managers" },
+  { "type": "mc", "question": "What type of questions should a well-designed questionnaire avoid?", "options": ["A) Leading questions", "B) Clear and specific questions", "C) Open-ended questions", "D) Yes/No questions"], "answer": "A) Leading questions" },
+  { "type": "mc", "question": "Which of the following is not a key aspect of requirements analysis?", "options": ["A) Examining requirements for omissions", "B) Categorizing and organizing requirements", "C) Documenting system design", "D) Ranking requirements based on customer needs"], "answer": "C) Documenting system design" },
+  { "type": "mc", "question": "In which stage of requirements engineering is it crucial to check requirements for consistency and ambiguity?", "options": ["A) Requirements Gathering", "B) Requirements Validation", "C) Requirements Analysis", "D) System Design"], "answer": "C) Requirements Analysis" },
+  { "type": "mc", "question": "Which of the following is not a function of the SRS?", "options": ["A) To describe system behaviors", "B) To define system design and construction details", "C) To guide system testing", "D) To outline user interface design"], "answer": "B) To define system design and construction details" },
+  { "type": "mc", "question": "What is the purpose of using an iterative approach in requirements analysis?", "options": ["A) To eliminate, combine, and modify requirements", "B) To gather initial user feedback", "C) To design the system architecture", "D) To develop prototypes"], "answer": "A) To eliminate, combine, and modify requirements" },
+  { "type": "mc", "question": "Which document provides a detailed description of system functionalities and constraints?", "options": ["A) Policy Manual", "B) System Design Document", "C) Software Requirements Specification (SRS)", "D) Project Plan"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "Which of the following is not an aspect of a well-designed questionnaire?", "options": ["A) Avoiding biased questions", "B) Following good practice guidelines", "C) Including leading questions", "D) Improving response rates"], "answer": "C) Including leading questions" },
+  { "type": "mc", "question": "What type of requirement describes how a system should perform?", "options": ["A) Functional Requirement", "B) Non-Functional Requirement", "C) Design Constraint", "D) Performance Requirement"], "answer": "B) Non-Functional Requirement" },
+  { "type": "mc", "question": "Which technique is used to ensure that all requirements are specified at the proper level of abstraction?", "options": ["A) Document Analysis", "B) Observation", "C) Requirements Validation", "D) Use-Case Approach"], "answer": "C) Requirements Validation" },
+  { "type": "mc", "question": "What does a well-designed questionnaire aim to achieve?", "options": ["A) Accurate information collection", "B) System design documentation", "C) Technical specifications", "D) System testing"], "answer": "A) Accurate information collection" },
+  { "type": "mc", "question": "Which of the following documents describes the informal system that an organization uses?", "options": ["A) Policy Manual", "B) System Design Document", "C) Organizational Chart", "D) Document Analysis"], "answer": "D) Document Analysis" },
+  { "type": "mc", "question": "What is a key disadvantage of using observation as a data collection technique?", "options": ["A) It provides detailed insights", "B) People may alter their behavior when observed", "C) It helps validate information from other sources", "D) It can be combined with other techniques"], "answer": "B) People may alter their behavior when observed" },
+  { "type": "mc", "question": "What is the main focus of requirements analysis?", "options": ["A) System design", "B) Gathering user feedback", "C) Organizing and categorizing requirements", "D) Developing prototypes"], "answer": "C) Organizing and categorizing requirements" },
+  { "type": "mc", "question": "In the context of requirements analysis, what does the term 'testable' refer to?", "options": ["A) Requirements that can be checked for consistency", "B) Requirements that are measurable and can be verified after implementation", "C) Requirements that are clearly defined", "D) Requirements that are bounded"], "answer": "B) Requirements that are measurable and can be verified after implementation" },
+  { "type": "mc", "question": "Which document outlines how a system should perform under different conditions?", "options": ["A) System Design Document", "B) Policy Manual", "C) Software Requirements Specification (SRS)", "D) Use-Case Diagram"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "Which of the following is a characteristic of a non-functional requirement?", "options": ["A) Defines system functionality", "B) Relates to system performance", "C) Describes user interactions", "D) Details system behavior under various conditions"], "answer": "B) Relates to system performance" },
+  { "type": "mc", "question": "What role does document analysis play in requirements gathering?", "options": ["A) It helps understand the informal system", "B) It provides detailed system design", "C) It validates collected requirements", "D) It outlines user interface design"], "answer": "A) It helps understand the informal system" },
+  { "type": "mc", "question": "Which of the following is an example of a functional requirement?", "options": ["A) The system should be scalable", "B) The system shall allow users to withdraw cash", "C) The system should be responsive", "D) The system must handle 1000 transactions per second"], "answer": "B) The system shall allow users to withdraw cash" },
+  { "type": "mc", "question": "What does a use-case diagram primarily illustrate?", "options": ["A) System design and architecture", "B) User interactions with the system", "C) System performance metrics", "D) Technical constraints"], "answer": "B) User interactions with the system" },
+  { "type": "mc", "question": "What should a well-designed questionnaire avoid to ensure effective data collection?", "options": ["A) Open-ended questions", "B) Leading questions", "C) Yes/No questions", "D) Specific questions"], "answer": "B) Leading questions" },
+  { "type": "mc", "question": "What is the primary purpose of requirements validation?", "options": ["A) To gather additional requirements", "B) To ensure requirements are complete, feasible, and aligned with stakeholders' needs", "C) To implement system design", "D) To design system prototypes"], "answer": "B) To ensure requirements are complete, feasible, and aligned with stakeholders' needs" },
+  { "type": "mc", "question": "In requirements engineering, what is the purpose of using iterative approaches?", "options": ["A) To design prototypes", "B) To refine and improve requirements over time", "C) To gather initial user feedback", "D) To implement the system"], "answer": "B) To refine and improve requirements over time" },
+  { "type": "mc", "question": "Which document serves as a reference for system testing and user documentation?", "options": ["A) Use-Case Diagram", "B) System Design Document", "C) Software Requirements Specification (SRS)", "D) Project Plan"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "What aspect of the system does a non-functional requirement address?", "options": ["A) System's behavior under different conditions", "B) System performance and constraints", "C) System's functionality", "D) User interface design"], "answer": "B) System performance and constraints" },
+  { "type": "mc", "question": "What is the role of an actor in a use-case diagram?", "options": ["A) To describe system functionality", "B) To interact with the system to achieve a specific goal", "C) To document system requirements", "D) To provide technical specifications"], "answer": "B) To interact with the system to achieve a specific goal" },
+  { "type": "mc", "question": "Which technique helps in understanding the informal system and identifying areas for improvement?", "options": ["A) Document Analysis", "B) Use-Case Approach", "C) Observation", "D) Requirements Validation"], "answer": "C) Observation" },
+  { "type": "mc", "question": "What should the SRS document include?", "options": ["A) Detailed system design", "B) Technical specifications", "C) System functionalities and constraints", "D) Project management details"], "answer": "C) System functionalities and constraints" },
+  { "type": "mc", "question": "Which of the following is an aspect of the requirements analysis process?", "options": ["A) Developing prototypes", "B) Categorizing and organizing requirements", "C) Designing the system architecture", "D) Gathering user feedback"], "answer": "B) Categorizing and organizing requirements" },
+  { "type": "mc", "question": "In the context of requirements engineering, what does 'bounded' refer to?", "options": ["A) Clearly defined and limited in scope", "B) Measurable and testable", "C) Open to changes", "D) Detailed system design"], "answer": "A) Clearly defined and limited in scope" },
+  { "type": "mc", "question": "What does a well-designed use-case diagram help to represent?", "options": ["A) System architecture", "B) Technical specifications", "C) User requirements and interactions", "D) Project management plans"], "answer": "C) User requirements and interactions" },
+  { "type": "mc", "question": "Which of the following is not a purpose of the Software Requirements Specification (SRS)?", "options": ["A) To describe the system's behaviors", "B) To guide system design and construction", "C) To outline user interface design", "D) To provide project management details"], "answer": "D) To provide project management details" },
+  { "type": "mc", "question": "What does 'testable' mean in the context of requirements?", "options": ["A) Requirements that can be verified after implementation", "B) Requirements that are well-defined", "C) Requirements that are bounded", "D) Requirements that are subject to changes"], "answer": "A) Requirements that can be verified after implementation" },
+  { "type": "mc", "question": "Which of the following is a key characteristic of non-functional requirements?", "options": ["A) Defines system functionality", "B) Relates to system performance and constraints", "C) Describes user interactions", "D) Provides technical specifications"], "answer": "B) Relates to system performance and constraints" },
+  { "type": "mc", "question": "What aspect of a system does the Software Requirements Specification (SRS) focus on?", "options": ["A) System design and construction", "B) System functionalities and constraints", "C) User interface design", "D) Project management plans"], "answer": "B) System functionalities and constraints" },
+  { "type": "mc", "question": "Which document serves as the foundation for system testing and user documentation?", "options": ["A) Use-Case Diagram", "B) System Design Document", "C) Software Requirements Specification (SRS)", "D) Project Plan"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "What does a use-case diagram primarily illustrate?", "options": ["A) System functionality", "B) User interactions with the system", "C) Technical specifications", "D) Project management details"], "answer": "B) User interactions with the system" },
+  { "type": "mc", "question": "What should a questionnaire avoid to ensure effective data collection?", "options": ["A) Specific questions", "B) Leading questions", "C) Clear and concise questions", "D) Open-ended questions"], "answer": "B) Leading questions" },
+  { "type": "mc", "question": "Which audience uses the SRS to base their estimates of schedule and resources?", "options": ["A) Marketing Department", "B) Project Managers", "C) Testing Group", "D) Maintenance and Support Staff"], "answer": "B) Project Managers" },
+  { "type": "mc", "question": "What is the primary purpose of document analysis in requirements gathering?", "options": ["A) To design new forms", "B) To understand the informal system and identify changes", "C) To validate collected requirements", "D) To observe user behavior"], "answer": "B) To understand the informal system and identify changes" },
+  { "type": "mc", "question": "Which technique helps in understanding the as-is system?", "options": ["A) Observation", "B) Document Analysis", "C) Requirements Validation", "D) Use-Case Approach"], "answer": "B) Document Analysis" },
+  { "type": "mc", "question": "What does a functional requirement describe?", "options": ["A) System performance", "B) System behavior and expected actions", "C) Technical specifications", "D) User interface design"], "answer": "B) System behavior and expected actions" },
+  { "type": "mc", "question": "What is the purpose of using an iterative approach in requirements analysis?", "options": ["A) To develop prototypes", "B) To refine and improve requirements over time", "C) To gather initial user feedback", "D) To implement the system"], "answer": "B) To refine and improve requirements over time" },
+  { "type": "mc", "question": "What role does the Software Requirements Specification (SRS) play in the software development process?", "options": ["A) It describes the system's design", "B) It guides the development of system functionalities", "C) It outlines user interface design", "D) It provides project management details"], "answer": "B) It guides the development of system functionalities" },
+  { "type": "mc", "question": "Which document describes the formal system that an organization uses?", "options": ["A) Policy Manual", "B) System Design Document", "C) Organizational Chart", "D) Document Analysis"], "answer": "B) System Design Document" },
+  { "type": "mc", "question": "What is the purpose of the System Requirements Specification (SRS)?", "options": ["A) To outline system performance metrics", "B) To document the system's functionalities and constraints", "C) To describe the project's budget and schedule", "D) To design the user interface"], "answer": "B) To document the system's functionalities and constraints" },
+  { "type": "mc", "question": "Which of the following techniques helps validate information collected from other sources?", "options": ["A) Observation", "B) Document Analysis", "C) Use-Case Approach", "D) Requirements Validation"], "answer": "A) Observation" },
+  { "type": "mc", "question": "What is an example of a functional requirement?", "options": ["A) The system must handle 1000 transactions per second", "B) The system should be scalable", "C) The system shall allow users to withdraw cash", "D) The system should be responsive"], "answer": "C) The system shall allow users to withdraw cash" },
+  { "type": "mc", "question": "Which technique helps in identifying what needs to be changed in a system?", "options": ["A) Document Analysis", "B) Observation", "C) Use-Case Approach", "D) Requirements Validation"], "answer": "A) Document Analysis" },
+  { "type": "mc", "question": "What does the term 'bounded' refer to in requirements analysis?", "options": ["A) Clearly defined and limited in scope", "B) Measurable and testable", "C) Open to changes", "D) Detailed system design"], "answer": "A) Clearly defined and limited in scope" },
+  { "type": "mc", "question": "Which document is used as a basis for system design and development?", "options": ["A) Policy Manual", "B) Use-Case Diagram", "C) System Design Document", "D) Software Requirements Specification (SRS)"], "answer": "C) System Design Document" },
+  { "type": "mc", "question": "What is the main focus of a use-case diagram?", "options": ["A) System performance", "B) User interactions with the system", "C) Technical specifications", "D) Project management details"], "answer": "B) User interactions with the system" },
+  { "type": "mc", "question": "Which of the following describes the system's behavior under various conditions?", "options": ["A) System Design Document", "B) Policy Manual", "C) Software Requirements Specification (SRS)", "D) Use-Case Diagram"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "What does 'testable' mean in the context of requirements?", "options": ["A) Requirements that can be verified after implementation", "B) Requirements that are well-defined", "C) Requirements that are bounded", "D) Requirements that are subject to changes"], "answer": "A) Requirements that can be verified after implementation" },
+  { "type": "mc", "question": "Which technique is used to validate collected requirements?", "options": ["A) Document Analysis", "B) Observation", "C) Requirements Validation", "D) Use-Case Approach"], "answer": "C) Requirements Validation" },
+  { "type": "mc", "question": "What is the primary purpose of requirements validation?", "options": ["A) To gather additional requirements", "B) To ensure requirements are complete, feasible, and aligned with stakeholders' needs", "C) To implement system design", "D) To design system prototypes"], "answer": "B) To ensure requirements are complete, feasible, and aligned with stakeholders' needs" },
+  { "type": "mc", "question": "Which document is crucial for system testing and user documentation?", "options": ["A) Use-Case Diagram", "B) System Design Document", "C) Software Requirements Specification (SRS)", "D) Project Plan"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "What does the term 'functional requirement' describe?", "options": ["A) System performance and constraints", "B) System behavior and expected actions", "C) Technical specifications", "D) User interface design"], "answer": "B) System behavior and expected actions" },
+  { "type": "mc", "question": "Which audience relies on the SRS to develop test plans, cases, and procedures?", "options": ["A) Project Managers", "B) Testing Group", "C) Maintenance and Support Staff", "D) Marketing Department"], "answer": "B) Testing Group" },
+  { "type": "mc", "question": "What aspect of the system does a non-functional requirement address?", "options": ["A) System's behavior under different conditions", "B) System performance and constraints", "C) System's functionality", "D) User interface design"], "answer": "B) System performance and constraints" },
+  { "type": "mc", "question": "Which document describes the organizational system that is used by the company?", "options": ["A) Policy Manual", "B) System Design Document", "C) Organizational Chart", "D) Software Requirements Specification (SRS)"], "answer": "C) Organizational Chart" },
+  { "type": "mc", "question": "What is the purpose of the iterative approach in requirements analysis?", "options": ["A) To develop prototypes", "B) To refine and improve requirements over time", "C) To gather initial user feedback", "D) To implement the system"], "answer": "B) To refine and improve requirements over time" },
+  { "type": "mc", "question": "What does a well-designed questionnaire aim to avoid?", "options": ["A) Open-ended questions", "B) Leading questions", "C) Specific questions", "D) Yes/No questions"], "answer": "B) Leading questions" },
+  { "type": "mc", "question": "Which document outlines how a system should perform under different conditions?", "options": ["A) System Design Document", "B) Policy Manual", "C) Software Requirements Specification (SRS)", "D) Use-Case Diagram"], "answer": "C) Software Requirements Specification (SRS)" },
+  { "type": "mc", "question": "Which technique is used to gain insight into the as-is system?", "options": ["A) Document Analysis", "B) Use-Case Approach", "C) Observation", "D) Requirements Validation"], "answer": "C) Observation" },
+  { "type": "mc", "question": "What is the role of an actor in a use-case diagram?", "options": ["A) To describe system functionality", "B) To interact with the system to achieve a specific goal", "C) To document system requirements", "D) To provide technical specifications"], "answer": "B) To interact with the system to achieve a specific goal" },
+  { "type": "mc", "question": "What should the Software Requirements Specification (SRS) include?", "options": ["A) Detailed system design", "B) Technical specifications", "C) System functionalities and constraints", "D) Project management details"], "answer": "C) System functionalities and constraints" },
+  { "type": "mc", "question": "What is the main advantage of using document analysis in requirements gathering?", "options": ["A) It helps understand the informal system and identify changes", "B) It provides detailed system design", "C) It validates collected requirements", "D) It outlines user interface design"], "answer": "A) It helps understand the informal system and identify changes" },
+  { "type": "mc", "question": "Which document serves as the basis for system design and development?", "options": ["A) Policy Manual", "B) Use-Case Diagram", "C) System Design Document", "D) Software Requirements Specification (SRS)"], "answer": "C) System Design Document" },
+];
+
+
+
+
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let selectedTFCount = 0;
+        let selectedMCCount = 0;
+        let selectedQuestions = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRangeValues();
+            shuffleQuestions();
+        });
+
+        function updateRangeValues() {
+            const tfRange = document.getElementById('tfCount');
+            const mcRange = document.getElementById('mcCount');
+            tfRange.max = questions.filter(q => q.type === 'tf').length;
+            mcRange.max = questions.filter(q => q.type === 'mc').length;
+        }
+
+        function updateValue(id, value) {
+            document.getElementById(id).innerText = value;
+        }
+
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+        }
+
+        function startExam() {
+            selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            selectedMCCount = parseInt(document.getElementById('mcCount').value);
+            selectedQuestions = getSelectedQuestions();
+            userAnswers = new Array(selectedQuestions.length).fill(null);
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            displayQuestion();
+        }
+
+        function getSelectedQuestions() {
+            const tfQuestions = questions.filter(q => q.type === 'tf').slice(0, selectedTFCount);
+            const mcQuestions = questions.filter(q => q.type === 'mc').slice(0, selectedMCCount);
+            return [...tfQuestions, ...mcQuestions];
+        }
+
+        function displayQuestion() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            const questionObj = selectedQuestions[currentQuestionIndex];
+            const questionElement = document.createElement('div');
+            questionElement.classList.add('question', 'active');
+            questionElement.innerHTML = `<p>Question ${currentQuestionIndex + 1}: ${questionObj.question}</p>`;
+
+            if (questionObj.type === 'tf') {
+                questionElement.innerHTML += `
+                    <label style="display:block;"><input type="radio" name="answer" value="T"> T</label>
+                    <label style="display:block;"><input type="radio" name="answer" value="F"> F</label>
+                `;
+            } else if (questionObj.type === 'mc') {
+                questionObj.options.forEach(option => {
+                    questionElement.innerHTML += `
+                        <label style="display:block;"><input type="radio" name="answer" value="${option}"> ${option}</label>
+                    `;
+                });
+            }
+            container.appendChild(questionElement);
+
+            if (userAnswers[currentQuestionIndex] !== null) {
+                const selectedOption = document.querySelector(`input[name="answer"][value="${userAnswers[currentQuestionIndex]}"]`);
+                if (selectedOption) selectedOption.checked = F;
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                saveAnswer();
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < selectedQuestions.length - 1) {
+                saveAnswer();
+                currentQuestionIndex++;
+                displayQuestion();
+            }
+        }
+
+        function saveAnswer() {
+            const selectedOption = document.querySelector('input[name="answer"]:checked');
+            if (selectedOption) {
+                userAnswers[currentQuestionIndex] = selectedOption.value;
+            }
+        }
+
+        function submitExam() {
+            saveAnswer();
+            let score = 0;
+            let correctAnswers = [];
+            selectedQuestions.forEach((question, index) => {
+                if (userAnswers[index] === question.answer) {
+                    score++;
+                } else {
+                    correctAnswers.push({ question: question.question, correctAnswer: question.answer, userAnswer: userAnswers[index] });
+                }
+            });
+
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = `<div class="result">You scored ${score} out of ${selectedQuestions.length}</div>`;
+
+            if (score === selectedQuestions.length) {
+                resultContainer.innerHTML += '<div class="result">Congratulations! You got a perfect score!</div>';
+            } else {
+                correctAnswers.forEach(({ question, correctAnswer, userAnswer }) => {
+                    resultContainer.innerHTML += `
+                        <div class="result">
+                            <p>Question: ${question}</p>
+                            <p>Correct Answer: ${correctAnswer}</p>
+                            <p>Your Answer: ${userAnswer}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('homeContainer').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
+
