@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam 2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            position: relative;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+            font-size: 18px; 
+        }
+        label {
+    display: inline-block;
+    margin-top: 4px;
+}
+        .button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .icon-button {
+            font-size: 20px;
+            cursor: pointer;
+            color: #007bff;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            margin: 0 10px;
+        }
+        .icon-button:hover {
+            color: #0056b3;
+        }
+        #randomizeIcon {
+            color: #00ff00; 
+        }
+        #randomizeIcon.inactive {
+            color: #ff0000; 
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            background-color: #e7f0ff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .footer a {
+            text-decoration: none;
+            font-size: 16px;
+            color: #666;
+        }
+        .error-box {
+            border: 1px solid #ff0000;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff5f5;
+        }
+        #questionHeader {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.error-box {
+    border: 1px solid #ff0000;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff5f5;
+}
+
+.correct-box {
+    border: 1px solid #00ff00;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #e7ffe7;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class="fas fa-random icon-button" id="randomizeIcon" onclick="toggleRandomize()" title="Randomize Questions"></i>
+        <i class="fas fa-redo-alt icon-button" id="restartExamBtn" onclick="restartExam()" title="Restart Exam" style="display: none;"></i>
+        <div id="homeContainer" class="home-container">
+            <h1>Exam 2</h1>
+            <label class="slider-label">Select number of True/False questions:</label>
+            <input type="range" id="tfCount" min="0" value="0" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">20</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="0" value="0" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">0</span>
+            <br>            
+            <button class="button" onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionHeader" style="margin-bottom: 10px; font-size: 18px;"></div> <!-- Add this line here -->
+        <div id="questionsContainer"></div>
+        <button class="button" id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button class="button" id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button class="button" id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <div class="footer">Developed by <a href="https://t.me/BadrElsheshtawy" target="_blank">Badr Elsheshtawy</a></div>
+<script>
+        const originalQuestions = [
+        { "type": "tf", "question": "It is necessary to place actors near the use cases they interact with to minimize line crossings in the diagram.", "answer": "T" },
+  { "type": "tf", "question": "Use-case diagrams are used to model both data and behavior aspects of functional requirements.", "answer": "T" },
+  { "type": "tf", "question": "The extend relationship is represented by an arrow from the base use case to the extension use case.", "answer": "F" },
+  { "type": "tf", "question": "The include relationship involves an arrow from the base use case to the used use case.", "answer": "T" },
+  { "type": "tf", "question": "Generalization in use cases indicates that the descendant inherits specific behavior from the ancestor.", "answer": "T" },
+  { "type": "tf", "question": "The primary purpose of a use-case diagram is to model the detailed internal structure of the system.", "answer": "F" },
+  { "type": "tf", "question": "Use-case scenarios must include both success and failure paths to fully describe system interactions.", "answer": "T" },
+  { "type": "tf", "question": "A use-case diagram helps to present a high-level view of the system’s functionality.", "answer": "T" },
+  { "type": "tf", "question": "Actors in use-case diagrams are always represented as rectangles when interacting with non-human systems.", "answer": "T" },
+  { "type": "tf", "question": "Use cases cannot be extended or included in other use cases.", "answer": "F" },
+  { "type": "tf", "question": "A use-case scenario diagram is helpful for visualizing user interactions with the system.", "answer": "T" },
+  { "type": "tf", "question": "Use-case diagrams are particularly useful for understanding detailed system requirements during the analysis phase.", "answer": "F" },
+  { "type": "tf", "question": "The generalization of a use case shows specialized behavior specific to each use case.", "answer": "T" },
+  { "type": "tf", "question": "The system boundary is used to indicate the limits of the system being modeled.", "answer": "T" },
+  { "type": "tf", "question": "The purpose of use-case diagrams is to capture the high-level business requirements and interactions.", "answer": "T" },
+  { "type": "tf", "question": "Use-case scenarios focus solely on successful outcomes without considering failure paths.", "answer": "F" },
+  { "type": "tf", "question": "Actors in use-case diagrams can interact with multiple use cases simultaneously.", "answer": "T" },
+  { "type": "tf", "question": "The diagramming process of use cases is essential for identifying the steps and interactions in a scenario.", "answer": "T" },
+  { "type": "tf", "question": "Use-case diagrams are only relevant for the development phase of a project.", "answer": "F" },
+  { "type": "tf", "question": "Actors in a use-case diagram are represented as stick figures by default.", "answer": "T" },
+  { "type": "tf", "question": "Generalization allows actors to share common use cases.", "answer": "T" },
+  { "type": "tf", "question": "The include relationship is used to show optional behavior that is not always required.", "answer": "F" },
+  { "type": "tf", "question": "Creating use-case diagrams is helpful for gathering system requirements and presenting them clearly.", "answer": "T" },
+  { "type": "tf", "question": "Failure scenarios are important for understanding how to handle situations where the use case does not complete successfully.", "answer": "T" },
+  
+  
+  {
+    "type": "mc",
+    "question": "The goal of identifying success and failure scenarios in use case modeling is to:",
+    "options": [
+      "A) Describe the basic flow of events to achieve a goal",
+      "B) Define optional behavior",
+      "C) Illustrate data validation",
+      "D) Model system boundaries"
+    ],
+    "answer": "A) Describe the basic flow of events to achieve a goal"
+  },
+  {
+    "type": "mc",
+    "question": "In a use case diagram, what does the line drawn between an actor and a use case represent?",
+    "options": [
+      "A) Extension of functionalities",
+      "B) Inclusion of behavior",
+      "C) Interaction between the actor and the use case",
+      "D) Generalization of behavior"
+    ],
+    "answer": "C) Interaction between the actor and the use case"
+  },
+  {
+    "type": "mc",
+    "question": "When creating a use case diagram, which of the following is a common practice?",
+    "options": [
+      "A) Using detailed data structures",
+      "B) Minimizing line crossings and maintaining clarity",
+      "C) Including implementation details",
+      "D) Modeling complex algorithms"
+    ],
+    "answer": "B) Minimizing line crossings and maintaining clarity"
+  },
+  {
+    "type": "mc",
+    "question": "Which component in a use case diagram represents a major piece of system functionality?",
+    "options": [
+      "A) Actor",
+      "B) Subject boundary",
+      "C) Use case",
+      "D) Relationship"
+    ],
+    "answer": "C) Use case"
+  },
+  {
+    "type": "mc",
+    "question": "What does the subject boundary in a use case diagram represent?",
+    "options": [
+      "A) The scope of the system or business process",
+      "B) The interaction between actors",
+      "C) The data flow between use cases",
+      "D) The inheritance of behavior"
+    ],
+    "answer": "A) The scope of the system or business process"
+  },
+  {
+    "type": "mc",
+    "question": "The generalization of an actor in a use case diagram means:",
+    "options": [
+      "A) An actor inherits the role of another actor",
+      "B) An actor can interact with multiple use cases",
+      "C) An actor extends the functionality of another actor",
+      "D) An actor includes the behavior of another actor"
+    ],
+    "answer": "A) An actor inherits the role of another actor"
+  },
+  {
+    "type": "mc",
+    "question": "Which relationship in a use case diagram is used to show that one use case provides additional optional behavior to another use case?",
+    "options": [
+      "A) Extend",
+      "B) Include",
+      "C) Generalization",
+      "D) Association"
+    ],
+    "answer": "A) Extend"
+  },
+  {
+    "type": "mc",
+    "question": "What is the purpose of the 'include' relationship between two use cases?",
+    "options": [
+      "A) To represent shared behavior among use cases",
+      "B) To extend one use case with optional behavior",
+      "C) To show that one use case inherits the behavior of another",
+      "D) To link actors with use cases"
+    ],
+    "answer": "A) To represent shared behavior among use cases"
+  },
+  {
+    "type": "mc",
+    "question": "In the context of use case modeling, what does a use case scenario describe?",
+    "options": [
+      "A) The sequence of steps for achieving a goal",
+      "B) The detailed data interactions",
+      "C) The structural design of the system",
+      "D) The internal system algorithms"
+    ],
+    "answer": "A) The sequence of steps for achieving a goal"
+  },
+  {
+    "type": "mc",
+    "question": "What is the first step in creating a use case scenario?",
+    "options": [
+      "A) Describe the use case",
+      "B) Identify the actors",
+      "C) Outline success and failure scenarios",
+      "D) Diagram the use case scenario"
+    ],
+    "answer": "B) Identify the actors"
+  },
+  {
+    "type": "mc",
+    "question": "In use case modeling, the extension point of a use case is:",
+    "options": [
+      "A) The point where additional optional behavior can be included",
+      "B) The starting point of a use case",
+      "C) The end point of a use case",
+      "D) The interface between two use cases"
+    ],
+    "answer": "A) The point where additional optional behavior can be included"
+  },
+  {
+    "type": "mc",
+    "question": "What is the significance of the subject boundary in a use case diagram?",
+    "options": [
+      "A) It defines the limits of the system or business process",
+      "B) It represents the interaction between different systems",
+      "C) It shows the relationships between actors",
+      "D) It details the data flow within the system"
+    ],
+    "answer": "A) It defines the limits of the system or business process"
+  },
+  {
+    "type": "mc",
+    "question": "What does the association between an actor and a use case indicate?",
+    "options": [
+      "A) The actor's interaction with the use case",
+      "B) The inclusion of the use case's behavior in the actor's actions",
+      "C) The generalization of the actor's role",
+      "D) The extension of the use case's functionality"
+    ],
+    "answer": "A) The actor's interaction with the use case"
+  },
+  {
+    "type": "mc",
+    "question": "Which of the following is true about the 'extend' relationship?",
+    "options": [
+      "A) It is used to add optional functionality to an existing use case",
+      "B) It indicates that one use case includes another",
+      "C) It shows the generalization of use cases",
+      "D) It represents the association between actors"
+    ],
+    "answer": "A) It is used to add optional functionality to an existing use case"
+  },
+  {
+    "type": "mc",
+    "question": "When modeling use cases, what does a failure scenario represent?",
+    "options": [
+      "A) A sequence of events that prevents successful completion of the use case",
+      "B) A description of successful steps in a use case",
+      "C) The inclusion of additional optional behavior",
+      "D) The generalization of a use case"
+    ],
+    "answer": "A) A sequence of events that prevents successful completion of the use case"
+  },
+  {
+    "type": "mc",
+    "question": "Which component of a use case diagram represents the roles interacting with the system?",
+    "options": [
+      "A) Subject boundary",
+      "B) Use case",
+      "C) Actor",
+      "D) Relationship"
+    ],
+    "answer": "C) Actor"
+  },
+  {
+    "type": "mc",
+    "question": "What does the term 'generalization' in use case modeling refer to?",
+    "options": [
+      "A) The inheritance of behavior or role from one use case or actor to another",
+      "B) The inclusion of one use case within another",
+      "C) The extension of one use case by another",
+      "D) The association of actors with use cases"
+    ],
+    "answer": "A) The inheritance of behavior or role from one use case or actor to another"
+  },
+  {
+    "type": "mc",
+    "question": "The primary purpose of use case diagrams is to:",
+    "options": [
+      "A) Provide a high-level overview of the system and its interactions",
+      "B) Detail the internal data structures and algorithms",
+      "C) Show the detailed sequence of operations within a system",
+      "D) Define the physical architecture of the system"
+    ],
+    "answer": "A) Provide a high-level overview of the system and its interactions"
+  },
+  {
+    "type": "mc",
+    "question": "What is the role of the actor in a use case diagram?",
+    "options": [
+      "A) It represents a role or entity that interacts with the system",
+      "B) It defines the boundaries of the system",
+      "C) It represents the detailed functions within the system",
+      "D) It models the general behavior of the system"
+    ],
+    "answer": "A) It represents a role or entity that interacts with the system"
+  },
+  {
+    "type": "mc",
+    "question": "In a use case diagram, what does the term 'use case' represent?",
+    "options": [
+      "A) A major piece of system functionality or interaction",
+      "B) A visual representation of system boundaries",
+      "C) The sequence of actions taken by the system",
+      "D) The roles interacting with the system"
+    ],
+    "answer": "A) A major piece of system functionality or interaction"
+  },
+  {
+    "type": "mc",
+    "question": "How should use cases be placed in a use case diagram for clarity?",
+    "options": [
+      "A) In a manner that minimizes line crossings and maximizes readability",
+      "B) According to their implementation order",
+      "C) Based on the frequency of use",
+      "D) By their hierarchical importance"
+    ],
+    "answer": "A) In a manner that minimizes line crossings and maximizes readability"
+  },
+  {
+    "type": "mc",
+    "question": "The 'include' relationship is used when:",
+    "options": [
+      "A) A sequence of behavior is used frequently in multiple use cases",
+      "B) One use case optionally extends another",
+      "C) An actor inherits the role of another actor",
+      "D) A use case is generalized"
+    ],
+    "answer": "A) A sequence of behavior is used frequently in multiple use cases"
+  },
+
+        
+
+
+        ];
+
+        let questions = [...originalQuestions];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let randomizeQuestions = true;
+
+        function toggleRandomize() {
+            randomizeQuestions = !randomizeQuestions;
+            document.getElementById('randomizeIcon').classList.toggle('inactive', !randomizeQuestions);
+        }
+
+        function updateValue(spanId, value) {
+            document.getElementById(spanId).textContent = value;
+        }
+
+        function startExam() {
+            const selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            const selectedMCCount = parseInt(document.getElementById('mcCount').value);
+
+            let filteredQuestions = [
+                ...originalQuestions.filter(q => q.type === 'tf').slice(0, selectedTFCount),
+                ...originalQuestions.filter(q => q.type === 'mc').slice(0, selectedMCCount)
+            ];
+
+            if (randomizeQuestions) {
+                shuffleArray(filteredQuestions);
+            }
+
+            questions = filteredQuestions;
+            currentQuestionIndex = 0;
+            userAnswers = [];
+
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            document.getElementById('restartExamBtn').style.display = 'inline-block';
+            document.getElementById('randomizeIcon').style.display = 'none'; // Hide randomize icon
+            displayQuestion(currentQuestionIndex);
+        }
+
+        function displayQuestion(index) {
+    const questionContainer = document.getElementById('questionsContainer');
+    const questionHeader = document.getElementById('questionHeader');
+    questionContainer.innerHTML = '';
+
+    const question = questions[index];
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question active';
+
+    questionHeader.textContent = `Question ${index + 1} of ${questions.length}`;
+    questionDiv.innerHTML = `<p>${question.question}</p>`;
+
+    if (question.type === 'tf') {
+        questionDiv.innerHTML += `
+            <label><input type="radio" name="answer" value="T"> True</label><br>
+            <label><input type="radio" name="answer" value="F"> False</label>
+        `;
+    } else if (question.type === 'mc') {
+        question.options.forEach(option => {
+            questionDiv.innerHTML += `<label><input type="radio" name="answer" value="${option}"> ${option}</label><br>`;
+        });
+    }
+
+    questionContainer.appendChild(questionDiv);
+
+    if (userAnswers[index] !== undefined) {
+        document.querySelector(`input[name="answer"][value="${userAnswers[index]}"]`).checked = true;
+    }
+
+    document.getElementById('prevBtn').style.display = index > 0 ? 'inline-block' : 'none';
+    document.getElementById('nextBtn').style.display = index < questions.length - 1 ? 'inline-block' : 'none';
+}
+
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function prevQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function saveAnswer() {
+    const selectedOption = document.querySelector('input[name="answer"]:checked');
+    if (selectedOption) {
+        userAnswers[currentQuestionIndex] = selectedOption.value;
+    }
+}
+
+
+function submitExam() {
+    saveAnswer();
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.innerHTML = '';
+
+    let correctCount = 0; // يجب أن يتم تعريف correctCount قبل حلقة forEach
+
+    questions.forEach((question, index) => {
+        const isCorrect = userAnswers[index] === question.answer;
+        if (isCorrect) correctCount++;
+
+        const resultDiv = document.createElement('div');
+        resultDiv.className = isCorrect ? 'correct-box' : 'error-box';
+        resultDiv.innerHTML = `
+            <p>${question.question}</p>
+            <p>Your answer: ${userAnswers[index]}</p>
+            <p>Correct answer: ${question.answer}</p>
+        `;
+        resultContainer.appendChild(resultDiv);
+    });
+
+    const scoreDiv = document.createElement('div'); // يجب إنشاء scoreDiv بعد حلقة forEach
+    scoreDiv.className = 'result';
+    scoreDiv.innerHTML = `<h2>Your score: ${correctCount} out of ${questions.length}</h2>`;
+
+    resultContainer.appendChild(scoreDiv);
+
+    document.getElementById('randomizeIcon').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'inline-block';
+    document.getElementById('questionsContainer').innerHTML = '';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+}
+
+
+
+
+
+
+        function restartExam() {
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            document.getElementById('resultContainer').innerHTML = '';
+            document.getElementById('homeContainer').style.display = 'block';
+            document.getElementById('randomizeIcon').style.display = 'inline-block';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('restartExamBtn').style.display = 'none';
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Add this function to update the maximum value of the range inputs
+function updateRangeMaxValues() {
+    document.getElementById('tfCount').max = originalQuestions.filter(q => q.type === 'tf').length;
+    document.getElementById('mcCount').max = originalQuestions.filter(q => q.type === 'mc').length;
+}
+
+// Update the range max values on page load and when restarting the exam
+window.onload = updateRangeMaxValues;
+function restartExam() {
+    currentQuestionIndex = 0;
+    userAnswers = [];
+    document.getElementById('resultContainer').innerHTML = '';
+    document.getElementById('homeContainer').style.display = 'block';
+    document.getElementById('randomizeIcon').style.display = 'inline-block';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'none';
+
+    // Update range inputs based on the number of questions available
+    updateRangeMaxValues();
+    
+    // Show number of remaining questions
+}
+
+    </script>
+</body>
+</html>
+
+
+
+

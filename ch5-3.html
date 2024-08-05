@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam 3</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            position: relative;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+            font-size: 18px; 
+        }
+        label {
+    display: inline-block;
+    margin-top: 4px;
+}
+        .button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .icon-button {
+            font-size: 20px;
+            cursor: pointer;
+            color: #007bff;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            margin: 0 10px;
+        }
+        .icon-button:hover {
+            color: #0056b3;
+        }
+        #randomizeIcon {
+            color: #00ff00; 
+        }
+        #randomizeIcon.inactive {
+            color: #ff0000; 
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            background-color: #e7f0ff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .footer a {
+            text-decoration: none;
+            font-size: 16px;
+            color: #666;
+        }
+        .error-box {
+            border: 1px solid #ff0000;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff5f5;
+        }
+         #questionHeader {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.error-box {
+    border: 1px solid #ff0000;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff5f5;
+}
+
+.correct-box {
+    border: 1px solid #00ff00;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #e7ffe7;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class="fas fa-random icon-button" id="randomizeIcon" onclick="toggleRandomize()" title="Randomize Questions"></i>
+        <i class="fas fa-redo-alt icon-button" id="restartExamBtn" onclick="restartExam()" title="Restart Exam" style="display: none;"></i>
+        <div id="homeContainer" class="home-container">
+            <h1>Exam 3</h1>
+            <label class="slider-label">Select number of True/False questions:</label>
+            <input type="range" id="tfCount" min="0" value="20" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">0</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="0" value="0" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">20</span>
+            <br>            
+            <button class="button" onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionHeader" style="margin-bottom: 10px; font-size: 18px;"></div> <!-- Add this line here -->
+        <div id="questionsContainer"></div>
+        <button class="button" id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button class="button" id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button class="button" id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <div class="footer">Developed by <a href="https://t.me/BadrElsheshtawy" target="_blank">Badr Elsheshtawy</a></div>
+<script>
+        const originalQuestions = [
+        {"type": "tf", "question": "The UML is managed by the Object Management Group (OMG).", "answer": "T"},
+
+{"type": "tf", "question": "UML helps to describe and design multiple aspects of software systems using an object-oriented approach.", "answer": "T"},
+{"type": "tf", "question": "The Unified Modeling Language (UML) was established as a standard by the Object Management Group (OMG) in the early 1990s.", "answer": "F"},
+{"type": "tf", "question": "UML is not a programming language but a general-purpose modeling language.", "answer": "T"},
+{"type": "tf", "question": "UML diagrams are used to visualize, construct, and document the dynamic aspects of software systems.", "answer": "F"},
+{"type": "tf", "question": "The analysis model in UML describes how the system works within an organization.", "answer": "F"},
+{"type": "tf", "question": "The design model in UML shows how the system works and interacts with other systems.", "answer": "F"},
+{"type": "tf", "question": "UML can be used for business modeling and non-software systems as well.", "answer": "T"},
+{"type": "tf", "question": "A class diagram is an essential part of UML that shows the conceptual data model and object structure of a system.", "answer": "T"},
+{"type": "tf", "question": "An object diagram is often called an instance diagram because it shows instances rather than classes.", "answer": "T"},
+{"type": "tf", "question": "UML depends heavily on the concept of inheritance to model software systems.", "answer": "T"},
+{"type": "tf", "question": "Encapsulation in UML refers to the mechanism of grouping related classes together.", "answer": "F"},
+{"type": "tf", "question": "Polymorphism allows objects in UML to adopt different forms or roles.", "answer": "T"},
+{"type": "tf", "question": "In UML, a package diagram is used to show the static structure of the system.", "answer": "F"},
+{"type": "tf", "question": "A composition structure diagram represents the internal hierarchical parts of the system in UML.", "answer": "T"},
+{"type": "tf", "question": "The deployment diagram in UML reveals the physical layout of the system, including hardware and software deployment.", "answer": "T"},
+{"type": "tf", "question": "A use case diagram is primarily used to describe the dynamic behavior of the system.", "answer": "F"},
+{"type": "tf", "question": "State machine diagrams in UML illustrate the lifecycle and state changes of an object.", "answer": "T"},
+{"type": "tf", "question": "Activity diagrams in UML are particularly useful for visualizing business workflows and processes.", "answer": "T"},
+
+{
+    "type": "mc",
+    "question": "What organization manages the UML standard?",
+    "options": [
+      "A) International Organization for Standardization (ISO)",
+      "B) Object Management Group (OMG)",
+      "C) Institute of Electrical and Electronics Engineers (IEEE)",
+      "D) World Wide Web Consortium (W3C)"
+    ],
+    "answer": "B) Object Management Group (OMG)"
+  },
+  {
+    "type": "mc",
+    "question": "Which of the following is NOT a purpose of UML?",
+    "options": [
+      "A) To specify software designs",
+      "B) To visualize software systems",
+      "C) To generate machine code",
+      "D) To document artifacts of software systems"
+    ],
+    "answer": "C) To generate machine code"
+  },
+  {
+    "type": "mc",
+    "question": "Which UML diagram type is used to visualize, construct, and document the static aspects of a system?",
+    "options": [
+      "A) Behaviour Diagram",
+      "B) Structure Diagram",
+      "C) Sequence Diagram",
+      "D) State Machine Diagram"
+    ],
+    "answer": "B) Structure Diagram"
+  },
+  {
+    "type": "mc",
+    "question": "What is the purpose of a class diagram in UML?",
+    "options": [
+      "A) To model dynamic behavior",
+      "B) To specify data and object structure",
+      "C) To visualize physical hardware",
+      "D) To show object interactions"
+    ],
+    "answer": "B) To specify data and object structure"
+  },
+  {
+    "type": "mc",
+    "question": "What does a state machine diagram illustrate?",
+    "options": [
+      "A) Data flow",
+      "B) Changes in object states",
+      "C) Hardware deployment",
+      "D) Class relationships"
+    ],
+    "answer": "B) Changes in object states"
+  },
+  {
+    "type": "mc",
+    "question": "Which UML diagram type is known for offering control of process flow mechanisms?",
+    "options": [
+      "A) Class Diagram",
+      "B) Sequence Diagram",
+      "C) Activity Diagram",
+      "D) Use Case Diagram"
+    ],
+    "answer": "C) Activity Diagram"
+  },
+  {
+    "type": "mc",
+    "question": "What is encapsulation in the context of UML?",
+    "options": [
+      "A) A mechanism for objects to communicate",
+      "B) A process of inheriting attributes from a superclass",
+      "C) Protection against unauthorized access to an object's internal state",
+      "D) The ability to adopt different forms"
+    ],
+    "answer": "C) Protection against unauthorized access to an object's internal state"
+  },
+  {
+    "type": "mc",
+    "question": "Which UML concept allows objects to take different forms?",
+    "options": [
+      "A) Encapsulation",
+      "B) Inheritance",
+      "C) Polymorphism",
+      "D) Messaging"
+    ],
+    "answer": "C) Polymorphism"
+  },
+  {
+    "type": "mc",
+    "question": "What type of UML diagram would be used to show a static description of system requirements?",
+    "options": [
+      "A) Sequence Diagram",
+      "B) Activity Diagram",
+      "C) Use Case Diagram",
+      "D) Deployment Diagram"
+    ],
+    "answer": "C) Use Case Diagram"
+  },
+  {
+    "type": "mc",
+    "question": "Which UML diagram type would you use to represent the physical layout and deployment of software and hardware components?",
+    "options": [
+      "A) State Machine Diagram",
+      "B) Deployment Diagram",
+      "C) Activity Diagram",
+      "D) Sequence Diagram"
+    ],
+    "answer": "B) Deployment Diagram"
+  },
+  {
+    "type": "mc",
+    "question": "What is the role of a package diagram in UML?",
+    "options": [
+      "A) To show the flow of control between activities",
+      "B) To group elements into higher-level units",
+      "C) To model the sequence of interactions",
+      "D) To depict the state changes of objects"
+    ],
+    "answer": "B) To group elements into higher-level units"
+  },
+  {
+    "type": "mc",
+    "question": "Which UML diagram type focuses on the interaction between objects to fulfill specific processes?",
+    "options": [
+      "A) Sequence Diagram",
+      "B) Activity Diagram",
+      "C) Class Diagram",
+      "D) Deployment Diagram"
+    ],
+    "answer": "A) Sequence Diagram"
+  },
+  {
+    "type": "mc",
+    "question": "What is the main use of an object diagram in UML?",
+    "options": [
+      "A) To show the static structure of the system",
+      "B) To represent a concrete instance of the system at a specific time",
+      "C) To model dynamic behavior and interactions",
+      "D) To describe hardware and software deployment"
+    ],
+    "answer": "B) To represent a concrete instance of the system at a specific time"
+  },
+  
+        ];
+
+               
+        let questions = [...originalQuestions];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let randomizeQuestions = true;
+
+        function toggleRandomize() {
+            randomizeQuestions = !randomizeQuestions;
+            document.getElementById('randomizeIcon').classList.toggle('inactive', !randomizeQuestions);
+        }
+
+        function updateValue(spanId, value) {
+            document.getElementById(spanId).textContent = value;
+        }
+
+        function startExam() {
+            const selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            const selectedMCCount = parseInt(document.getElementById('mcCount').value);
+
+            let filteredQuestions = [
+                ...originalQuestions.filter(q => q.type === 'tf').slice(0, selectedTFCount),
+                ...originalQuestions.filter(q => q.type === 'mc').slice(0, selectedMCCount)
+            ];
+
+            if (randomizeQuestions) {
+                shuffleArray(filteredQuestions);
+            }
+
+            questions = filteredQuestions;
+            currentQuestionIndex = 0;
+            userAnswers = [];
+
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            document.getElementById('restartExamBtn').style.display = 'inline-block';
+            document.getElementById('randomizeIcon').style.display = 'none'; // Hide randomize icon
+            displayQuestion(currentQuestionIndex);
+        }
+
+        function displayQuestion(index) {
+    const questionContainer = document.getElementById('questionsContainer');
+    const questionHeader = document.getElementById('questionHeader');
+    questionContainer.innerHTML = '';
+
+    const question = questions[index];
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question active';
+
+    questionHeader.textContent = `Question ${index + 1} of ${questions.length}`;
+    questionDiv.innerHTML = `<p>${question.question}</p>`;
+
+    if (question.type === 'tf') {
+        questionDiv.innerHTML += `
+            <label><input type="radio" name="answer" value="T"> True</label><br>
+            <label><input type="radio" name="answer" value="F"> False</label>
+        `;
+    } else if (question.type === 'mc') {
+        question.options.forEach(option => {
+            questionDiv.innerHTML += `<label><input type="radio" name="answer" value="${option}"> ${option}</label><br>`;
+        });
+    }
+
+    questionContainer.appendChild(questionDiv);
+
+    if (userAnswers[index] !== undefined) {
+        document.querySelector(`input[name="answer"][value="${userAnswers[index]}"]`).checked = true;
+    }
+
+    document.getElementById('prevBtn').style.display = index > 0 ? 'inline-block' : 'none';
+    document.getElementById('nextBtn').style.display = index < questions.length - 1 ? 'inline-block' : 'none';
+}
+
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function prevQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function saveAnswer() {
+    const selectedOption = document.querySelector('input[name="answer"]:checked');
+    if (selectedOption) {
+        userAnswers[currentQuestionIndex] = selectedOption.value;
+    }
+}
+
+
+    function submitExam() {
+    saveAnswer();
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.innerHTML = '';
+
+    let correctCount = 0; // يجب أن يتم تعريف correctCount قبل حلقة forEach
+
+    questions.forEach((question, index) => {
+        const isCorrect = userAnswers[index] === question.answer;
+        if (isCorrect) correctCount++;
+
+        const resultDiv = document.createElement('div');
+        resultDiv.className = isCorrect ? 'correct-box' : 'error-box';
+        resultDiv.innerHTML = `
+            <p>${question.question}</p>
+            <p>Your answer: ${userAnswers[index]}</p>
+            <p>Correct answer: ${question.answer}</p>
+        `;
+        resultContainer.appendChild(resultDiv);
+    });
+
+    const scoreDiv = document.createElement('div'); // يجب إنشاء scoreDiv بعد حلقة forEach
+    scoreDiv.className = 'result';
+    scoreDiv.innerHTML = `<h2>Your score: ${correctCount} out of ${questions.length}</h2>`;
+
+    resultContainer.appendChild(scoreDiv);
+
+    document.getElementById('randomizeIcon').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'inline-block';
+    document.getElementById('questionsContainer').innerHTML = '';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+}
+
+
+
+
+
+
+        function restartExam() {
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            document.getElementById('resultContainer').innerHTML = '';
+            document.getElementById('homeContainer').style.display = 'block';
+            document.getElementById('randomizeIcon').style.display = 'inline-block';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('restartExamBtn').style.display = 'none';
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Add this function to update the maximum value of the range inputs
+function updateRangeMaxValues() {
+    document.getElementById('tfCount').max = originalQuestions.filter(q => q.type === 'tf').length;
+    document.getElementById('mcCount').max = originalQuestions.filter(q => q.type === 'mc').length;
+}
+
+// Update the range max values on page load and when restarting the exam
+window.onload = updateRangeMaxValues;
+function restartExam() {
+    currentQuestionIndex = 0;
+    userAnswers = [];
+    document.getElementById('resultContainer').innerHTML = '';
+    document.getElementById('homeContainer').style.display = 'block';
+    document.getElementById('randomizeIcon').style.display = 'inline-block';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'none';
+
+    // Update range inputs based on the number of questions available
+    updateRangeMaxValues();
+    
+    // Show number of remaining questions
+}
+
+    </script>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam 2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            position: relative;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+            font-size: 18px; 
+        }
+        label {
+    display: inline-block;
+    margin-top: 4px;
+}
+        .button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .icon-button {
+            font-size: 20px;
+            cursor: pointer;
+            color: #007bff;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            margin: 0 10px;
+        }
+        .icon-button:hover {
+            color: #0056b3;
+        }
+        #randomizeIcon {
+            color: #00ff00; 
+        }
+        #randomizeIcon.inactive {
+            color: #ff0000; 
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            background-color: #e7f0ff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .footer a {
+            text-decoration: none;
+            font-size: 16px;
+            color: #666;
+        }
+        .error-box {
+            border: 1px solid #ff0000;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff5f5;
+        }
+        #questionHeader {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.error-box {
+    border: 1px solid #ff0000;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff5f5;
+}
+
+.correct-box {
+    border: 1px solid #00ff00;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #e7ffe7;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class="fas fa-random icon-button" id="randomizeIcon" onclick="toggleRandomize()" title="Randomize Questions"></i>
+        <i class="fas fa-redo-alt icon-button" id="restartExamBtn" onclick="restartExam()" title="Restart Exam" style="display: none;"></i>
+        <div id="homeContainer" class="home-container">
+            <h1>Exam 2</h1>
+            <label class="slider-label">Select number of True/False questions:</label>
+            <input type="range" id="tfCount" min="0" value="0" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">20</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="0" value="0" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">0</span>
+            <br>            
+            <button class="button" onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionHeader" style="margin-bottom: 10px; font-size: 18px;"></div> <!-- Add this line here -->
+        <div id="questionsContainer"></div>
+        <button class="button" id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button class="button" id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button class="button" id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <div class="footer">Developed by <a href="https://t.me/BadrElsheshtawy" target="_blank">Badr Elsheshtawy</a></div>
+<script>
+        const originalQuestions = [
+    
+        {"type": "tf", "question": "UML is primarily a programming language.", "answer": "F"},
+  {"type": "tf", "question": "UML helps to communicate and understand software requirements.", "answer": "T"},
+  {"type": "tf", "question": "In UML, a class is a set of objects that share the same features and constraints.", "answer": "T"},
+  {"type": "tf", "question": "UML was unified before the 1980s.", "answer": "F"},
+  {"type": "tf", "question": "UML diagrams can be used for both software and non-software systems.", "answer": "T"},
+  {"type": "tf", "question": "Object diagrams are often called instance diagrams.", "answer": "T"},
+  {"type": "tf", "question": "UML is only used for visualizing software systems, not for business modeling.", "answer": "F"},
+  {"type": "tf", "question": "A class diagram shows the concrete image of the system state at a specific time.", "answer": "F"},
+  {"type": "tf", "question": "Inheritance in UML refers to deriving new classes from existing classes.", "answer": "T"},
+  {"type": "tf", "question": "UML is not a formal language for theorem proving.", "answer": "T"},
+  {"type": "tf", "question": "Encapsulation is the protection against unauthorized access to the internal state of an object.", "answer": "T"},
+  {"type": "tf", "question": "UML uses object-oriented concepts to represent different phases of software development.", "answer": "T"},
+  {"type": "tf", "question": "State Machine Diagrams show the order of messages exchanged between objects.", "answer": "F"},
+  {"type": "tf", "question": "Timing Diagrams describe the behavior of classes focusing on the time of occurrence of events.", "answer": "T"},
+  {"type": "tf", "question": "Sequence Diagrams focus on communication relationships among interacting partners.", "answer": "F"},
+  {"type": "tf", "question": "A package diagram groups classes according to common properties.", "answer": "T"},
+  {"type": "tf", "question": "Polymorphism refers to the ability to adopt different forms.", "answer": "T"},
+  {"type": "tf", "question": "UML is only used in software engineering and does not apply to other fields.", "answer": "F"},
+  {"type": "tf", "question": "Behavior Diagrams describe the static aspects of the system.", "answer": "F"},
+  {"type": "mc", "question": "What is the purpose of UML?", "options": ["A) To write programming code", "B) To model and visualize software systems", "C) To perform mathematical theorem proving", "D) To manage hardware components"], "answer": "B) To model and visualize software systems"},
+  {"type": "mc", "question": "Which diagram represents the internal system in detail?", "options": ["A) Deployment Diagram", "B) Package Diagram", "C) Composition Structure Diagram", "D) Activity Diagram"], "answer": "C) Composition Structure Diagram"},
+  {"type": "mc", "question": "What does an Object Diagram show?", "options": ["A) System requirements", "B) Concrete image of system state", "C) Interaction between objects", "D) Package grouping"], "answer": "B) Concrete image of system state"},
+  {"type": "mc", "question": "Which UML diagram focuses on the sequence of message exchanges?", "options": ["A) Sequence Diagram", "B) State Machine Diagram", "C) Timing Diagram", "D) Collaboration Diagram"], "answer": "A) Sequence Diagram"},
+  {"type": "mc", "question": "What is encapsulation in UML?", "options": ["A) Deriving new classes", "B) The ability to adopt different forms", "C) Protecting against unauthorized access to internal state", "D) Visualizing system requirements"], "answer": "C) Protecting against unauthorized access to internal state"},
+  {"type": "mc", "question": "What is a Package Diagram used for?", "options": ["A) Showing system state at a specific time", "B) Grouping classes into higher-level units", "C) Modeling behavior changes", "D) Describing interactions between objects"], "answer": "B) Grouping classes into higher-level units"},
+  {"type": "mc", "question": "What does a Use Case Diagram represent?", "options": ["A) The structure of a system", "B) The static view of the system", "C) System requirements and user interactions", "D) The sequence of events"], "answer": "C) System requirements and user interactions"},
+  {"type": "mc", "question": "Which diagram illustrates the lifecycle of an object?", "options": ["A) Class Diagram", "B) State Machine Diagram", "C) Deployment Diagram", "D) Activity Diagram"], "answer": "B) State Machine Diagram"},
+  {"type": "mc", "question": "What is polymorphism in UML?", "options": ["A) Grouping constructs", "B) A mechanism for deriving new classes", "C) The ability to adopt different forms", "D) Protecting against unauthorized access"], "answer": "C) The ability to adopt different forms"},
+  {"type": "mc", "question": "What does a Timing Diagram focus on?", "options": ["A) System architecture", "B) Time of occurrence of events", "C) Class structure", "D) System requirements"], "answer": "B) Time of occurrence of events"},
+  {
+    "type": "mc",
+    "question": "What is the primary purpose of using a model in software development?",
+    "options": [
+      "A) To create detailed software specifications",
+      "B) To communicate with customers and increase understanding",
+      "C) To generate executable code automatically",
+      "D) To standardize programming languages"
+    ],
+    "answer": "B) To communicate with customers and increase understanding"
+  },
+  {
+    "type": "mc",
+    "question": "What was the main reason for the creation of UML?",
+    "options": [
+      "A) To unify different object-oriented graphical models",
+      "B) To replace traditional programming languages",
+      "C) To develop real-time systems",
+      "D) To provide a new software development methodology"
+    ],
+    "answer": "A) To unify different object-oriented graphical models"
+  },
+  {
+    "type": "mc",
+    "question": "Who were the main contributors to the first version of UML?",
+    "options": [
+      "A) Coad, Jacobson, and Odell",
+      "B) Rumbaugh, Booch, and Jacobson",
+      "C) Rumbaugh, Odell, and Coad",
+      "D) Booch, Odell, and Jacobson"
+    ],
+    "answer": "B) Rumbaugh, Booch, and Jacobson"
+  },
+
+
+        ];
+
+        let questions = [...originalQuestions];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let randomizeQuestions = true;
+
+        function toggleRandomize() {
+            randomizeQuestions = !randomizeQuestions;
+            document.getElementById('randomizeIcon').classList.toggle('inactive', !randomizeQuestions);
+        }
+
+        function updateValue(spanId, value) {
+            document.getElementById(spanId).textContent = value;
+        }
+
+        function startExam() {
+            const selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            const selectedMCCount = parseInt(document.getElementById('mcCount').value);
+
+            let filteredQuestions = [
+                ...originalQuestions.filter(q => q.type === 'tf').slice(0, selectedTFCount),
+                ...originalQuestions.filter(q => q.type === 'mc').slice(0, selectedMCCount)
+            ];
+
+            if (randomizeQuestions) {
+                shuffleArray(filteredQuestions);
+            }
+
+            questions = filteredQuestions;
+            currentQuestionIndex = 0;
+            userAnswers = [];
+
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            document.getElementById('restartExamBtn').style.display = 'inline-block';
+            document.getElementById('randomizeIcon').style.display = 'none'; // Hide randomize icon
+            displayQuestion(currentQuestionIndex);
+        }
+
+        function displayQuestion(index) {
+    const questionContainer = document.getElementById('questionsContainer');
+    const questionHeader = document.getElementById('questionHeader');
+    questionContainer.innerHTML = '';
+
+    const question = questions[index];
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question active';
+
+    questionHeader.textContent = `Question ${index + 1} of ${questions.length}`;
+    questionDiv.innerHTML = `<p>${question.question}</p>`;
+
+    if (question.type === 'tf') {
+        questionDiv.innerHTML += `
+            <label><input type="radio" name="answer" value="T"> True</label><br>
+            <label><input type="radio" name="answer" value="F"> False</label>
+        `;
+    } else if (question.type === 'mc') {
+        question.options.forEach(option => {
+            questionDiv.innerHTML += `<label><input type="radio" name="answer" value="${option}"> ${option}</label><br>`;
+        });
+    }
+
+    questionContainer.appendChild(questionDiv);
+
+    if (userAnswers[index] !== undefined) {
+        document.querySelector(`input[name="answer"][value="${userAnswers[index]}"]`).checked = true;
+    }
+
+    document.getElementById('prevBtn').style.display = index > 0 ? 'inline-block' : 'none';
+    document.getElementById('nextBtn').style.display = index < questions.length - 1 ? 'inline-block' : 'none';
+}
+
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function prevQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function saveAnswer() {
+    const selectedOption = document.querySelector('input[name="answer"]:checked');
+    if (selectedOption) {
+        userAnswers[currentQuestionIndex] = selectedOption.value;
+    }
+}
+
+
+function submitExam() {
+    saveAnswer();
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.innerHTML = '';
+
+    let correctCount = 0; // يجب أن يتم تعريف correctCount قبل حلقة forEach
+
+    questions.forEach((question, index) => {
+        const isCorrect = userAnswers[index] === question.answer;
+        if (isCorrect) correctCount++;
+
+        const resultDiv = document.createElement('div');
+        resultDiv.className = isCorrect ? 'correct-box' : 'error-box';
+        resultDiv.innerHTML = `
+            <p>${question.question}</p>
+            <p>Your answer: ${userAnswers[index]}</p>
+            <p>Correct answer: ${question.answer}</p>
+        `;
+        resultContainer.appendChild(resultDiv);
+    });
+
+    const scoreDiv = document.createElement('div'); // يجب إنشاء scoreDiv بعد حلقة forEach
+    scoreDiv.className = 'result';
+    scoreDiv.innerHTML = `<h2>Your score: ${correctCount} out of ${questions.length}</h2>`;
+
+    resultContainer.appendChild(scoreDiv);
+
+    document.getElementById('randomizeIcon').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'inline-block';
+    document.getElementById('questionsContainer').innerHTML = '';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+}
+
+
+
+
+
+
+        function restartExam() {
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            document.getElementById('resultContainer').innerHTML = '';
+            document.getElementById('homeContainer').style.display = 'block';
+            document.getElementById('randomizeIcon').style.display = 'inline-block';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('restartExamBtn').style.display = 'none';
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Add this function to update the maximum value of the range inputs
+function updateRangeMaxValues() {
+    document.getElementById('tfCount').max = originalQuestions.filter(q => q.type === 'tf').length;
+    document.getElementById('mcCount').max = originalQuestions.filter(q => q.type === 'mc').length;
+}
+
+// Update the range max values on page load and when restarting the exam
+window.onload = updateRangeMaxValues;
+function restartExam() {
+    currentQuestionIndex = 0;
+    userAnswers = [];
+    document.getElementById('resultContainer').innerHTML = '';
+    document.getElementById('homeContainer').style.display = 'block';
+    document.getElementById('randomizeIcon').style.display = 'inline-block';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'none';
+
+    // Update range inputs based on the number of questions available
+    updateRangeMaxValues();
+    
+    // Show number of remaining questions
+}
+
+    </script>
+</body>
+</html>
+
+
+
+

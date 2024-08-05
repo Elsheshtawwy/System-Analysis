@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch3 Exam 1</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            position: relative;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+            font-size: 18px; 
+        }
+        label {
+    display: inline-block;
+    margin-top: 4px;
+}
+        .button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .icon-button {
+            font-size: 20px;
+            cursor: pointer;
+            color: #007bff;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            margin: 0 10px;
+        }
+        .icon-button:hover {
+            color: #0056b3;
+        }
+        #randomizeIcon {
+            color: #00ff00; 
+        }
+        #randomizeIcon.inactive {
+            color: #ff0000; 
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            background-color: #e7f0ff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .footer a {
+            text-decoration: none;
+            font-size: 16px;
+            color: #666;
+        }
+        .error-box {
+            border: 1px solid #ff0000;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff5f5;
+        }
+        #questionHeader {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class="fas fa-random icon-button" id="randomizeIcon" onclick="toggleRandomize()" title="Randomize Questions"></i>
+        <i class="fas fa-redo-alt icon-button" id="restartExamBtn" onclick="restartExam()" title="Restart Exam" style="display: none;"></i>
+        <div id="homeContainer" class="home-container">
+            <h1>Ch3 Exam 1</h1>
+            <label class="slider-label">Select number of True/False questions:</label>
+            <input type="range" id="tfCount" min="0" value="20" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">20</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="0" value="20" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">20</span>
+            <br>            
+            <button class="button" onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionHeader" style="margin-bottom: 10px; font-size: 18px;"></div> <!-- Add this line here -->
+        <div id="questionsContainer"></div>
+        <button class="button" id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button class="button" id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button class="button" id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <div class="footer">Developed by <a href="https://t.me/BadrElsheshtawy" target="_blank">Badr Elsheshtawy</a></div>
+<script>
+        const originalQuestions = [
+        { type: 'tf', question: 'The syntax of a programming language includes rules for variable naming.', answer: 'T' },
+{ type: 'tf', question: 'Semantics does not concern the effect of a statement in a program.', answer: 'F' },
+{ type: 'tf', question: 'A type error is an example of a syntax error.', answer: 'F' },
+{ type: 'tf', question: 'Dynamic typing allows the type of a variable to change during execution.', answer: 'T' },
+{ type: 'tf', question: 'Static typing means the type of a variable is fixed at compile time.', answer: 'T' },
+{ type: 'tf', question: 'JavaScript uses dynamic type binding.', answer: 'T' },
+{ type: 'tf', question: 'In implicit type declaration, the type of a variable is specified explicitly.', answer: 'F' },
+{ type: 'tf', question: 'Static binding occurs before runtime and remains unchanged during execution.', answer: 'T' },
+{ type: 'tf', question: 'Dynamic binding occurs during execution and can change.', answer: 'T' },
+{ type: 'tf', question: 'Type checking ensures operands are of compatible types.', answer: 'T' },
+{ type: 'tf', question: 'A strongly typed language always detects type errors.', answer: 'T' },
+{ type: 'tf', question: 'Coercion is the automatic conversion of one data type to another.', answer: 'T' },
+{ type: 'tf', question: 'The scope of a variable refers to the region of a program where it is accessible.', answer: 'T' },
+{ type: 'tf', question: 'Static scope is based on the calling sequences of program units.', answer: 'F' },
+{ type: 'tf', question: 'Dynamic scope is based on program text.', answer: 'F' },
+{ type: 'tf', question: 'A reserved word can be used as a user-defined name.', answer: 'F' },
+{ type: 'tf', question: 'A variable may have different addresses at different times during execution.', answer: 'T' },
+{ type: 'tf', question: 'Aliases are multiple variable names accessing the same memory location.', answer: 'T' },
+{ type: 'tf', question: 'Aliasing improves program readability.', answer: 'F' },
+{ type: 'mc', question: 'In programming terms, what does "Sentence" mean?', options: ['a) A single character', 'b) A series of characters', 'c) A block of memory', 'd) A function call'], answer: 'b) A series of characters' },
+  { type: 'mc', question: 'What does the "Language" represent in programming?', options: ['a) A single statement', 'b) A collection of sentences', 'c) A reserved word', 'd) A compiler directive'], answer: 'b) A collection of sentences' },
+  { type: 'mc', question: 'What does a "Token" represent in programming?', options: ['a) A type of error', 'b) A unit of syntax', 'c) A program structure', 'd) A memory address'], answer: 'b) A unit of syntax' },
+  { type: 'mc', question: 'Which of the following is considered a "Literal"?', options: ['a) count', 'b) 2', 'c) =', 'd) while'], answer: 'b) 2' },
+  { type: 'mc', question: 'What is the token type for the "+" in "index = 2*count + 17;"?', options: ['a) equal_sign', 'b) identifier', 'c) plus_operator', 'd) int_literal'], answer: 'c) plus_operator' },
+  { type: 'mc', question: 'What kind of token is "while" in C++?', options: ['a) Identifier', 'b) Keyword', 'c) Operator', 'd) Literal'], answer: 'b) Keyword' },
+  { type: 'mc', question: 'What type of token is the semicolon in "index = 2*count + 17;"?', options: ['a) identifier', 'b) operator', 'c) literal', 'd) semicolon'], answer: 'd) semicolon' },
+  { type: 'mc', question: 'Which of the following is an "Identifier"?', options: ['a) +', 'b) count', 'c) 17', 'd) ='], answer: 'b) count' },
+  { type: 'mc', question: 'What does "Lexeme" classify?', options: ['a) Syntax', 'b) Operators', 'c) Tokens', 'd) Literals'], answer: 'c) Tokens' },
+  { type: 'mc', question: 'In the expression "index = 2*count + 17;", what does "2" represent?', options: ['a) An identifier', 'b) A literal', 'c) An operator', 'd) A token'], answer: 'b) A literal' },
+  { type: 'mc', question: 'Which of the following is a "Lexeme"?', options: ['a) while', 'b) Syntax', 'c) Sentence', 'd) Semantic'], answer: 'a) while' },
+  { type: 'mc', question: 'What is the token for "2" in "index = 2*count + 17;"?', options: ['a) identifier', 'b) literal', 'c) operator', 'd) keyword'], answer: 'b) literal' },
+  { type: 'mc', question: 'Which token represents the multiplication operator in "index = 2*count + 17;"?', options: ['a) identifier', 'b) equal_sign', 'c) plus_operator', 'd) mult_operator'], answer: 'd) mult_operator' },
+  { type: 'mc', question: 'What kind of token is "17" in the expression "index = 2*count + 17;"?', options: ['a) int_literal', 'b) identifier', 'c) operator', 'd) keyword'], answer: 'a) int_literal' },
+  { type: 'mc', question: 'What is the classification of "count" in "index = 2*count + 17;"?', options: ['a) operator', 'b) identifier', 'c) literal', 'd) special word'], answer: 'b) identifier' },
+  { type: 'mc', question: 'What token type is "index" in "index = 2*count + 17;"?', options: ['a) literal', 'b) identifier', 'c) operator', 'd) special word'], answer: 'b) identifier' },
+  { type: 'mc', question: 'Which of the following is an "Operator"?', options: ['a) =', 'b) while', 'c) count', 'd) index'], answer: 'a) =' },
+  { type: 'mc', question: 'What is the token for "index" in "index = 2*count + 17;"?', options: ['a) identifier', 'b) literal', 'c) operator', 'd) special word'], answer: 'a) identifier' },
+  { type: 'mc', question: 'In programming, what does a "Lexeme" define?', options: ['a) A syntax rule', 'b) A sequence of characters', 'c) A programming paradigm', 'd) A memory model'], answer: 'b) A sequence of characters' },
+  { type: 'mc', question: 'Which of the following is NOT a "Token"?', options: ['a) identifier', 'b) literal', 'c) operator', 'd) function'], answer: 'd) function' }
+
+];
+
+        let questions = [...originalQuestions];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let randomizeQuestions = true;
+
+        function toggleRandomize() {
+            randomizeQuestions = !randomizeQuestions;
+            document.getElementById('randomizeIcon').classList.toggle('inactive', !randomizeQuestions);
+        }
+
+        function updateValue(spanId, value) {
+            document.getElementById(spanId).textContent = value;
+        }
+
+        function startExam() {
+            const selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            const selectedMCCount = parseInt(document.getElementById('mcCount').value);
+
+            let filteredQuestions = [
+                ...originalQuestions.filter(q => q.type === 'tf').slice(0, selectedTFCount),
+                ...originalQuestions.filter(q => q.type === 'mc').slice(0, selectedMCCount)
+            ];
+
+            if (randomizeQuestions) {
+                shuffleArray(filteredQuestions);
+            }
+
+            questions = filteredQuestions;
+            currentQuestionIndex = 0;
+            userAnswers = [];
+
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            document.getElementById('restartExamBtn').style.display = 'inline-block';
+            document.getElementById('randomizeIcon').style.display = 'none'; // Hide randomize icon
+            displayQuestion(currentQuestionIndex);
+        }
+
+        function displayQuestion(index) {
+    const questionContainer = document.getElementById('questionsContainer');
+    const questionHeader = document.getElementById('questionHeader');
+    questionContainer.innerHTML = '';
+
+    const question = questions[index];
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question active';
+
+    // Add question number and total number of questions
+    questionHeader.textContent = `Question ${index + 1} of ${questions.length}`;
+
+    questionDiv.innerHTML = `<p>${question.question}</p>`;
+
+    if (question.type === 'tf') {
+        questionDiv.innerHTML += `
+            <label><input type="radio" name="answer" value="T"> True</label><br>
+            <label><input type="radio" name="answer" value="F"> False</label>
+        `;
+    } else if (question.type === 'mc') {
+        question.options.forEach(option => {
+            questionDiv.innerHTML += `<label><input type="radio" name="answer" value="${option}"> ${option}</label><br>`;
+        });
+    }
+
+    questionContainer.appendChild(questionDiv);
+
+    if (userAnswers[index] !== undefined) {
+        document.querySelector(`input[name="answer"][value="${userAnswers[index]}"]`).checked = true;
+    }
+
+    document.getElementById('prevBtn').style.display = index > 0 ? 'inline-block' : 'none';
+    document.getElementById('nextBtn').style.display = index < questions.length - 1 ? 'inline-block' : 'none';
+}
+
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function prevQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        }
+
+        function saveAnswer() {
+            const selectedOption = document.querySelector('input[name="answer"]:checked');
+            if (selectedOption) {
+                userAnswers[currentQuestionIndex] = selectedOption.value;
+            }
+        }
+
+        function submitExam() {
+            saveAnswer();
+
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = '';
+
+            let correctCount = 0;
+            const scoreDiv = document.createElement('div');
+            scoreDiv.className = 'result';
+            scoreDiv.innerHTML = `<h2>Your score: ${correctCount} out of ${questions.length}</h2>`;
+            resultContainer.appendChild(scoreDiv);
+            questions.forEach((question, index) => {
+                const isCorrect = userAnswers[index] === question.answer;
+                if (isCorrect) correctCount++;
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `
+                    <p>${question.question}</p>
+                    <p>Your answer: ${userAnswers[index]}</p>
+                    <p>Correct answer: ${question.answer}</p>
+                `;
+                resultContainer.appendChild(resultDiv);
+            });
+
+            document.getElementById('randomizeIcon').style.display = 'none';
+            document.getElementById('restartExamBtn').style.display = 'inline-block';
+            document.getElementById('questionsContainer').innerHTML = '';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+        }
+
+        function restartExam() {
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            document.getElementById('resultContainer').innerHTML = '';
+            document.getElementById('homeContainer').style.display = 'block';
+            document.getElementById('randomizeIcon').style.display = 'inline-block';
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('restartExamBtn').style.display = 'none';
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Add this function to update the maximum value of the range inputs
+function updateRangeMaxValues() {
+    document.getElementById('tfCount').max = originalQuestions.filter(q => q.type === 'tf').length;
+    document.getElementById('mcCount').max = originalQuestions.filter(q => q.type === 'mc').length;
+}
+
+// Update the range max values on page load and when restarting the exam
+window.onload = updateRangeMaxValues;
+function restartExam() {
+    currentQuestionIndex = 0;
+    userAnswers = [];
+    document.getElementById('resultContainer').innerHTML = '';
+    document.getElementById('homeContainer').style.display = 'block';
+    document.getElementById('randomizeIcon').style.display = 'inline-block';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('restartExamBtn').style.display = 'none';
+
+    // Update range inputs based on the number of questions available
+    updateRangeMaxValues();
+    
+    // Show number of remaining questions
+}
+
+    </script>
+</body>
+</html>
+
+
+
+
